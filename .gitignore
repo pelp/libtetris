@@ -4,3 +4,4 @@ leaderboard.db
 *.swp
 *.DS_Store
 ._*
+.idea/

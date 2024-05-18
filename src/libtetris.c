@@ -7,9 +7,29 @@ void ghost(tetris_t *game);
 
 void place_piece(tetris_t *game);
 
-piece_t *get_piece()
+void generate_bag(bag_t *bag)
 {
-    return pieces[rand() % (sizeof(pieces) / sizeof(piece_t *))];
+    bag->current = 0;
+    for (int i = 0; i < NUM_PIECES; ++i) bag->order[i] = i;
+    for (int i = NUM_PIECES - 1; i > 0; --i)
+    {
+        int j = rand() % (i+1);
+        int temp = bag->order[i];
+        bag->order[i] = bag->order[j];
+        bag->order[j] = temp;
+    }
+}
+
+piece_t *peek_piece(bag_t *bag)
+{
+    return pieces[bag->order[bag->current]];
+}
+piece_t *grab_piece(bag_t *bag)
+{
+    piece_t *piece = peek_piece(bag);
+    bag->current += 1;
+    if(bag->current >= NUM_PIECES) generate_bag(bag);
+    return piece;
 }
 
 int tile_coord_rotate(tetris_t *game, int x, int y)
@@ -133,8 +153,11 @@ void init(tetris_t *game, int width, int height)
     }
     game->rotated.width = 0;
     game->rotated.height = 0;
-    game->current = get_piece();
-    game->next = get_piece();
+
+    generate_bag(&game->bag);
+    game->current = grab_piece(&game->bag);
+    game->next = peek_piece(&game->bag);
+
     game->x = game->width / 2;
     game->y = 0;
     game->lines = 0;
@@ -146,14 +169,8 @@ void place_piece(tetris_t *game)
 {
     game->y = 0;
     game->x = game->width / 2;
-    piece_t *n = get_piece();
-    // Reroll to reduce duplicates
-    if (n == game->next)
-    {
-        n = get_piece();
-    }
-    game->current = game->next;
-    game->next = n;
+    game->current = grab_piece(&game->bag);
+    game->next = peek_piece(&game->bag);
     set_rotation(game, 0);
 }
 
