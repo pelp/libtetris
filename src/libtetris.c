@@ -1,6 +1,5 @@
 #include "libtetris.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 
 void ghost(tetris_t *game);
