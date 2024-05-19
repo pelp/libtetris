@@ -15,6 +15,7 @@ output:
 	mkdir $(BUILD_DIR)
 
 
+
 $(BUILD_DIR)/libtetris.o: $(SRC_DIR)/libtetris.c
 	cd $(BUILD_DIR) && $(CC) $(CC_FLAGS) ../$(SRC_DIR)/libtetris.c
 
@@ -24,11 +25,15 @@ $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
 link: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
 	$(CC) $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o -lncurses -o $(OUTPUT_DIR)/$(EXE_NAME)
 
-wasm: output font $(OUTPUT_DIR)/www/index.html venv
+wasm: output font $(OUTPUT_DIR)/www/index.html $(OUTPUT_DIR)/www/style.css $(OUTPUT_DIR)/www/game.js venv
 
 font:
 	cp $(SRC_DIR)/digital-7.mono.ttf $(OUTPUT_DIR)/www/
 
+$(OUTPUT_DIR)/www/style.css: $(SRC_DIR)/html_template/style.css
+	cp $(SRC_DIR)/html_template/style.css $(OUTPUT_DIR)/www/style.css
+$(OUTPUT_DIR)/www/game.js: $(SRC_DIR)/html_template/game.js
+	cp $(SRC_DIR)/html_template/game.js $(OUTPUT_DIR)/www/game.js
 $(OUTPUT_DIR)/www/index.html: emsdk $(SRC_DIR)/html_template/template.html
 	source $(BUILD_DIR)/emsdk/emsdk_env.sh && emcc $(SRC_DIR)/libtetris.c $(SRC_DIR)/wasm.c -o $(OUTPUT_DIR)/www/index.html --shell-file $(SRC_DIR)/html_template/template.html -s NO_EXIT_RUNTIME=1 -s "EXPORTED_RUNTIME_METHODS=['ccall']"
 
