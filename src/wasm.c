@@ -35,6 +35,14 @@ EMSCRIPTEN_KEEPALIVE int js_rotate()
 {
     return rotate(&game);
 }
+EMSCRIPTEN_KEEPALIVE int js_rotate_cw()
+{
+    return rotate_cw(&game);
+}
+EMSCRIPTEN_KEEPALIVE int js_rotate_ccw()
+{
+    return rotate_ccw(&game);
+}
 
 EMSCRIPTEN_KEEPALIVE char * js_get()
 {

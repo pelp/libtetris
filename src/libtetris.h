@@ -66,6 +66,8 @@ static piece_t *pieces[] = {&PIECE_I, &PIECE_J, &PIECE_L, &PIECE_O, &PIECE_S, &P
 void init(tetris_t *game, int width, int height);
 int step(tetris_t *game);
 int rotate(tetris_t *game);
+int rotate_cw(tetris_t *game);
+int rotate_ccw(tetris_t *game);
 int left(tetris_t *game);
 int right(tetris_t *game);
 char read_game(tetris_t *game, int x, int y);
