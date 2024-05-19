@@ -33,20 +33,35 @@ typedef struct
     int lines;
 } tetris_t;
 
-static piece_t PIECE_O = { 2, 2, { 1, 1, 1, 1 } };
-static piece_t PIECE_I = { 1, 4, { 2, 2, 2, 2 } };
-static piece_t PIECE_J = { 3, 2, { 3, 0, 0, 3, 3, 3 } };
-static piece_t PIECE_L = { 3, 2, { 0, 0, 4, 4, 4, 4 } };
-static piece_t PIECE_Z = { 3, 2, { 5, 5, 0, 0, 5, 5 } };
-static piece_t PIECE_S = { 3, 2, { 0, 6, 6, 6, 6, 0 } };
-static piece_t PIECE_T = { 3, 2, { 0, 7, 0, 7, 7, 7 } };
-static piece_t *pieces[] = { &PIECE_O,
-                             &PIECE_I,
-                             &PIECE_J,
-                             &PIECE_L,
-                             &PIECE_Z,
-                             &PIECE_S,
-                             &PIECE_T };
+static piece_t PIECE_I = {4, 4, {
+        0, 0, 0, 0,
+        2, 2, 2, 2,
+        0, 0, 0, 0,
+        0, 0, 0, 0}};
+static piece_t PIECE_J = {3, 3, {
+        3, 0, 0,
+        3, 3, 3,
+        0, 0, 0}};
+static piece_t PIECE_L = {3, 3, {
+        0, 0, 4,
+        4, 4, 4,
+        0, 0, 0}};
+static piece_t PIECE_O = {2, 2, {
+        1, 1,
+        1, 1}};
+static piece_t PIECE_S = {3, 3, {
+        0, 6, 6,
+        6, 6, 0,
+        0, 0, 0}};
+static piece_t PIECE_T = {3, 3, {
+        0, 7, 0,
+        7, 7, 7,
+        0, 0, 0}};
+static piece_t PIECE_Z = {3, 3, {
+        5, 5, 0,
+        0, 5, 5,
+        0, 0, 0}};
+static piece_t *pieces[] = {&PIECE_I, &PIECE_J, &PIECE_L, &PIECE_O, &PIECE_S, &PIECE_T, &PIECE_Z};
 
 void init(tetris_t *game, int width, int height);
 int step(tetris_t *game);

@@ -58,12 +58,13 @@ int touching(tetris_t *game, int dx, int dy)
         for (int j = 0; j < game->rotated.width; j++)
         {
             int piece_coord = tile_coord_rotate(game, j, i);
+            if (game->current->tiles[piece_coord] == 0) continue;
             int game_coord = (i + oy) * game->width + // y
                              j + ox; // x
             if ((i + oy >= game->height) ||
                 (j + ox >= game->width) ||
                 (j + ox < 0) ||
-                (game->tiles[game_coord] > 0 && game->current->tiles[piece_coord] > 0))
+                (game->tiles[game_coord] > 0))
             {
                 return 0;
             }
@@ -104,15 +105,15 @@ int set_rotation(tetris_t *game, int rotation)
         case 2:
             game->rotated.width = game->current->width;
             game->rotated.height = game->current->height;
-            game->ox = -game->rotated.width / 2;
-            game->oy = -game->rotated.height / 2;
+            game->ox = -(game->rotated.width + 1) / 2;
+            game->oy = -(game->rotated.height + 1) / 2;
             break;
         case 1:
         case 3:
             game->rotated.width = game->current->height;
             game->rotated.height = game->current->width;
-            game->ox = -game->rotated.width / 2;
-            game->oy = -game->rotated.height / 2;
+            game->ox = -(game->rotated.width + 1) / 2;
+            game->oy = -(game->rotated.height + 1) / 2;
             break;
     }
     if (rotation & 0xF0) return 1;
