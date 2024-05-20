@@ -1,6 +1,5 @@
 #include "libtetris.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 
 void ghost(tetris_t *game);
@@ -124,9 +123,24 @@ int set_rotation(tetris_t *game, int rotation)
     return 0;
 }
 
+// TODO: Fix rotation code duplication later
 int rotate(tetris_t *game)
 {
     int rot = set_rotation(game, (game->rotation + 1) % 4);
+    if (rot == 0) {
+        ghost(game);
+    }
+    return rot;
+}
+int rotate_cw(tetris_t *game){
+    int rot = set_rotation(game, (game->rotation + 1) % 4);
+    if (rot == 0) {
+        ghost(game);
+    }
+    return rot;
+}
+int rotate_ccw(tetris_t *game){
+    int rot = set_rotation(game, (game->rotation + 3) % 4);
     if (rot == 0) {
         ghost(game);
     }
