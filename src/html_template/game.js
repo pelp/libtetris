@@ -8,6 +8,15 @@ const GRID_HEIGHT = 20;
 Module.onRuntimeInitialized = () => {
     let playing = true;
 
+    let keys = {
+        down: false,
+        left: false,
+        right: false,
+        rotate_cw: false,
+        rotate_ccw: false,
+        space: false
+    }
+
     const generate_html = () => {
         const elements = [];
         const shape_elements = [];
@@ -101,29 +110,49 @@ Module.onRuntimeInitialized = () => {
 
         const handle = rc => {
             switch (rc) {
-                case 0:
-                    return 0;
                 case 1:
                     playing = false;
                     postScore();
                     return 1;
                 case 2:
                     return 1;
+                default:
+                    return rc;
             }
         };
 
-        const timeout = () => {
-            if (playing) {
-                handle(Module._js_step());
-                render();
-            }
-            setTimeout(timeout, 1000 - 10 * Module._js_lines());
-        };
-        setTimeout(timeout, 1000);
+        let prev;
+        const tick = (timeStamp) => {
+            // TODO: Get more accurate clock
+            const diff = timeStamp - prev
+            prev = timeStamp
+            handle(Module._js_tick(
+                keys.space,
+                keys.down,
+                keys.left,
+                keys.right,
+                keys.rotate_cw,
+                keys.rotate_ccw,
+                keys.hold,
+                diff * 1000
+            ));
+            render();
+            window.requestAnimationFrame(tick)
+        }
+        window.requestAnimationFrame(tick)
 
+        const tickrate = 60;
+        const dificulty = 1;
         const restart = () => {
             playing = true;
-            Module._js_init(GRID_WIDTH, GRID_HEIGHT);
+            Module._js_init(
+                GRID_WIDTH,
+                GRID_HEIGHT,
+                Math.floor(1000000 / tickrate),
+                Math.floor(tickrate * dificulty),
+                15,
+                3
+            );
             render();
         };
 
@@ -162,38 +191,33 @@ Module.onRuntimeInitialized = () => {
     };
 
     const [render, handle] = generate_html();
-
-    document.onkeydown = event => {
+    
+    const handle_key = (event, state) => {
         if (!playing) return; // Guard against not playing
         switch (event.code) {
             case "Space": // Space
-                while (handle(Module._js_step()) === 0) {
-                }
-                render();
+                keys.space = state;
                 break;
             case "ArrowLeft": //Left arrow
-                Module._js_left();
-                render();
+                keys.left = state;
                 break;
             case "ControlLeft": // Up arrow
-                Module._js_rotate_ccw();
-                render();
+                keys.rotate_ccw = state;
                 break;
             case "ArrowUp": // Up arrow
-                Module._js_rotate_cw();
-                render();
+                keys.rotate_cw = state;
                 break;
             case "ArrowRight": // Right arrow
-                Module._js_right();
-                render();
+                keys.right = state;
                 break;
             case "ArrowDown":
-                handle(Module._js_step());
-                render();
+                keys.down = state;
                 break;
             default:
                 console.log(event.code);
                 break;
         }
-    };
+    }
+    document.onkeydown = event => handle_key(event, true)
+    document.onkeyup = event => handle_key(event, false)
 };
