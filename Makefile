@@ -1,18 +1,18 @@
 CC=gcc
-CC_FLAGS=-c
+CC_FLAGS=-c -Werror -Wall -Wextra
 EXE_NAME=tetris
 OUTPUT_DIR=output
 SRC_DIR=src
 BUILD_DIR=build
 EMSDK_REPO=https://github.com/emscripten-core/emsdk.git
 
-SHELL:=/bin/env bash
+SHELL:=/usr/bin/env bash
 
 all: link
 
 output:
 	mkdir -p $(OUTPUT_DIR)/www
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
 
 

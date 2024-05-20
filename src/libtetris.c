@@ -1,10 +1,24 @@
 #include "libtetris.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 
+int step(tetris_t *game);
+int rotate(tetris_t *game, char amount);
+int rotate_cw(tetris_t *game);
+int rotate_ccw(tetris_t *game);
+int left(tetris_t *game);
+int right(tetris_t *game);
 void ghost(tetris_t *game);
-
 void place_piece(tetris_t *game);
+void generate_bag(bag_t *bag);
+piece_t *peek_piece(bag_t *bag);
+piece_t *grab_piece(bag_t *bag);
+int tile_coord_rotate(tetris_t *game, int x, int y);
+int touching(tetris_t *game, int dx, int dy);
+int set_rotation(tetris_t *game, int rotation);
+void increment_hold(tetris_t * game, tetris_params_t params);
+tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params);
 
 void generate_bag(bag_t *bag)
 {
@@ -23,6 +37,7 @@ piece_t *peek_piece(bag_t *bag)
 {
     return pieces[bag->order[bag->current]];
 }
+
 piece_t *grab_piece(bag_t *bag)
 {
     piece_t *piece = peek_piece(bag);
@@ -123,31 +138,29 @@ int set_rotation(tetris_t *game, int rotation)
     return 0;
 }
 
-// TODO: Fix rotation code duplication later
-int rotate(tetris_t *game)
+int rotate(tetris_t *game, char amount)
 {
-    int rot = set_rotation(game, (game->rotation + 1) % 4);
+    int rot = set_rotation(game, (game->rotation + amount) % 4);
     if (rot == 0) {
         ghost(game);
     }
     return rot;
 }
 int rotate_cw(tetris_t *game){
-    int rot = set_rotation(game, (game->rotation + 1) % 4);
-    if (rot == 0) {
-        ghost(game);
-    }
-    return rot;
+    return rotate(game, 1);
 }
 int rotate_ccw(tetris_t *game){
-    int rot = set_rotation(game, (game->rotation + 3) % 4);
-    if (rot == 0) {
-        ghost(game);
-    }
-    return rot;
+    return rotate(game, 3);
 }
 
-void init(tetris_t *game, int width, int height)
+void init(
+    tetris_t *game,
+    int width,
+    int height,
+    time_us_t fall_interval,
+    time_us_t delayed_auto_shift,
+    time_us_t automatic_repeat_rate
+)
 {
     // Seed random generator with time
     srand((unsigned) time(NULL));
@@ -176,6 +189,14 @@ void init(tetris_t *game, int width, int height)
     game->x = game->width / 2;
     game->y = 0;
     game->lines = 0;
+    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    {
+        ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
+    }
+    game->fall_interval = fall_interval;
+    game->fall_time = 0;
+    game->delayed_auto_shift = delayed_auto_shift;
+    game->automatic_repeat_rate = automatic_repeat_rate;
     set_rotation(game, 0);
     ghost(game);
 }
@@ -295,4 +316,92 @@ char read_game(tetris_t *game, int x, int y)
     {
         return game->tiles[y * game->width + x];
     }
+}
+
+void increment_hold(tetris_t * game, tetris_params_t params)
+{
+    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    {
+        if (((bool*)&params.inputs)[i * sizeof(bool)])
+        {
+            ((time_us_t*)&game->input_time)[i * sizeof(bool)] += params.delta_time;
+        }
+        else
+        {
+            ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
+        }
+    }
+}
+
+tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
+{
+    tetris_hold_time_t old_hold = game->input_time;
+    increment_hold(game, params);
+    tetris_inputs_t edge;
+    tetris_inputs_t hold;
+    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    {
+        const int t = ((time_us_t*)&game->input_time)[i * sizeof(bool)];
+        const int old_t = ((time_us_t*)&old_hold)[i * sizeof(bool)];
+        ((bool*)&hold)[i * sizeof(bool)] = (
+            t > game->delayed_auto_shift
+        );
+        ((bool*)&edge)[i * sizeof(bool)] = (
+            t > 0 && old_t == 0
+        );
+        if (t > game->delayed_auto_shift) ((time_us_t*)&game->input_time)[i * sizeof(bool)] -= game->automatic_repeat_rate;
+    }
+    return (tetris_input_state_t){
+        .hold = hold,
+        .edge = edge
+    };
+}
+
+int tick(tetris_t *game, tetris_params_t params)
+{
+    // Input hold management
+    int rc = -1;
+    tetris_input_state_t state = get_keys(game, params);
+
+    // Input logic
+    if (state.hold.down || state.edge.down)
+    {
+        rc = step(game);
+    }
+    if (state.edge.space)
+    {
+        // Fall all the way down
+        while ((rc = step(game)) == 0);
+    }
+    if (state.hold.left || state.edge.left)
+    {
+        rc = 0;
+        left(game);
+    }
+    if (state.hold.right || state.edge.right)
+    {
+        rc = 0;
+        right(game);
+    }
+    if (state.edge.rotate_ccw)
+    {
+        rc = 0;
+        rotate_ccw(game);
+    }
+    if (state.edge.rotate_cw)
+    {
+        rc = 0;
+        rotate_cw(game);
+    }
+    // TODO: Implement hold
+    // if (input.hold) hold(game);
+
+    // Force fall on fall interval
+    game->fall_time -= params.delta_time;
+    if (game->fall_time <= 0)
+    {
+        game->fall_time += game->fall_interval;
+        rc = step(game);
+    }
+    return rc;
 }
