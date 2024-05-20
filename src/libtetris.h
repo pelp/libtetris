@@ -1,4 +1,8 @@
+#include <stdbool.h>
+
 #define NUM_PIECES 7
+
+typedef int time_us_t;
 
 typedef struct
 {
@@ -10,13 +14,47 @@ typedef struct
 {
     int width;
     int height;
-} translation_t;
+} rotation_t;
 
 typedef struct
 {
     int current;
     int order[NUM_PIECES];
 } bag_t;
+
+typedef struct 
+{
+    bool rotate_cw;
+    bool rotate_ccw;
+    bool hold;
+    bool down;
+    bool left;
+    bool right;
+    bool space;
+} tetris_inputs_t;
+
+typedef struct
+{
+    tetris_inputs_t edge;
+    tetris_inputs_t hold;
+} tetris_input_state_t;
+
+typedef struct
+{
+    time_us_t rotate_cw;
+    time_us_t rotate_ccw;
+    time_us_t hold;
+    time_us_t down;
+    time_us_t left;
+    time_us_t right;
+    time_us_t space;
+} tetris_hold_time_t;
+
+typedef struct
+{
+    tetris_inputs_t inputs;
+    time_us_t delta_time;
+} tetris_params_t;
 
 typedef struct
 {
@@ -28,9 +66,14 @@ typedef struct
     piece_t *current;
     piece_t *next;
     bag_t bag;
-    translation_t rotated;
+    rotation_t rotated;
     int rotation;
     int lines;
+    time_us_t fall_interval;
+    time_us_t fall_time;
+    time_us_t delayed_auto_shift;
+    time_us_t automatic_repeat_rate;
+    tetris_hold_time_t input_time;
 } tetris_t;
 
 static piece_t PIECE_I = {4, 4, {
@@ -63,11 +106,12 @@ static piece_t PIECE_Z = {3, 3, {
         0, 0, 0}};
 static piece_t *pieces[] = {&PIECE_I, &PIECE_J, &PIECE_L, &PIECE_O, &PIECE_S, &PIECE_T, &PIECE_Z};
 
-void init(tetris_t *game, int width, int height);
-int step(tetris_t *game);
-int rotate(tetris_t *game);
-int rotate_cw(tetris_t *game);
-int rotate_ccw(tetris_t *game);
-int left(tetris_t *game);
-int right(tetris_t *game);
+// Public API
+int tick(tetris_t *game, tetris_params_t params);
 char read_game(tetris_t *game, int x, int y);
+void init(tetris_t *game,
+          int width,
+          int height,
+          time_us_t fall_interval,
+          time_us_t delayed_auto_shift,
+          time_us_t automatic_repeat_rate);
