@@ -1,5 +1,5 @@
 CC=gcc
-CC_FLAGS=-c
+CC_FLAGS=-c -Werror -Wall -Wextra
 EXE_NAME=tetris
 OUTPUT_DIR=output
 SRC_DIR=src
@@ -12,7 +12,7 @@ all: link
 
 output:
 	mkdir -p $(OUTPUT_DIR)/www
-	mkdir $(BUILD_DIR)
+	mkdir -p $(BUILD_DIR)
 
 
 
