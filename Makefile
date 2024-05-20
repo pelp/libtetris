@@ -6,7 +6,7 @@ SRC_DIR=src
 BUILD_DIR=build
 EMSDK_REPO=https://github.com/emscripten-core/emsdk.git
 
-SHELL:=/bin/env bash
+SHELL:=/usr/bin/env bash
 
 all: link
 
