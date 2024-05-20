@@ -28,7 +28,7 @@ link: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
 wasm: output font $(OUTPUT_DIR)/www/index.html $(OUTPUT_DIR)/www/style.css $(OUTPUT_DIR)/www/game.js venv
 
 font:
-	cp $(SRC_DIR)/digital-7.mono.ttf $(OUTPUT_DIR)/www/
+	cp $(SRC_DIR)/html_template/digital-7.mono.ttf $(OUTPUT_DIR)/www/
 
 $(OUTPUT_DIR)/www/style.css: $(SRC_DIR)/html_template/style.css
 	cp $(SRC_DIR)/html_template/style.css $(OUTPUT_DIR)/www/style.css
