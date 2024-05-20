@@ -35,7 +35,7 @@ $(OUTPUT_DIR)/www/style.css: $(SRC_DIR)/html_template/style.css
 $(OUTPUT_DIR)/www/game.js: $(SRC_DIR)/html_template/game.js
 	cp $(SRC_DIR)/html_template/game.js $(OUTPUT_DIR)/www/game.js
 $(OUTPUT_DIR)/www/index.html: emsdk $(SRC_DIR)/html_template/template.html
-	source $(BUILD_DIR)/emsdk/emsdk_env.sh && emcc $(SRC_DIR)/libtetris.c $(SRC_DIR)/wasm.c -o $(OUTPUT_DIR)/www/index.html --shell-file $(SRC_DIR)/html_template/template.html -s NO_EXIT_RUNTIME=1 -s "EXPORTED_RUNTIME_METHODS=['ccall']"
+	source $(BUILD_DIR)/emsdk/emsdk_env.sh && emcc -Wall -Werror -Wextra $(SRC_DIR)/libtetris.c $(SRC_DIR)/wasm.c -o $(OUTPUT_DIR)/www/index.html --shell-file $(SRC_DIR)/html_template/template.html -s NO_EXIT_RUNTIME=1 -s "EXPORTED_RUNTIME_METHODS=['ccall']"
 
 emsdk:
 ifeq ("$(wildcard $(BUILD_DIR)/emsdk)","")
