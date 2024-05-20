@@ -64,11 +64,12 @@ Module.onRuntimeInitialized = () => {
         const lines_span = document.querySelector("#lines_span");
 
         const render_shape = (parent, index) => {
-            let old_w = parent.dataset.oldW;
-            let old_h = parent.dataset.oldH;
+            let old_w = parseInt(parent.dataset.oldW);
+            let old_h = parseInt(parent.dataset.oldH);
+            let old_shape = parseInt(parent.dataset.oldShape);
             let shape_ptr = 0;
-            let shape_width = 0;
-            let shape_height = 0;
+            let shape_width;
+            let shape_height;
             if (index === -1) {
                 shape_ptr = Module._js_hold();
                 shape_width = Module._js_hold_width();
@@ -79,9 +80,7 @@ Module.onRuntimeInitialized = () => {
                 shape_height = Module._js_next_height();
             }
 
-            if (shape_ptr > 0 && !(old_w === shape_width && old_h === shape_height)) {
-                old_w = shape_width;
-                old_h = shape_height;
+            if (shape_ptr > 0 && (old_w !== shape_width || old_h !== shape_height || old_shape !== shape_ptr)) {
                 const wrapper = document.createElement("div");
                 wrapper.innerHTML = "";
                 wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
@@ -99,8 +98,9 @@ Module.onRuntimeInitialized = () => {
                     e.dataset.tile = Module.HEAP8[i + shape_ptr];
                 });
                 parent.replaceChildren(wrapper);
-                parent.dataset.oldW = old_w;
-                parent.dataset.oldH = old_h;
+                parent.dataset.oldW = shape_width;
+                parent.dataset.oldH = shape_height;
+                parent.dataset.oldShape = shape_ptr;
             }
         };
 
