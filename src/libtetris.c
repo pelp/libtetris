@@ -154,6 +154,7 @@ int rotate_ccw(tetris_t *game){
 }
 int hold(tetris_t *game){
     if (!game->can_hold) return 0;
+    game->can_hold = false;
     if (game->hold){
         piece_t *held_piece = game->hold;
         game->hold = game->current;
@@ -296,6 +297,7 @@ int step(tetris_t *game)
         }
         // Next piece
         place_piece(game);
+        game->can_hold = true;
         return 2;
     }
 
