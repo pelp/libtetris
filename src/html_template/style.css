@@ -12,7 +12,7 @@ body {
     --info-font: 'Calculator', sans-serif;
     --cover-color: #999;
     --uncover-color: #CCC;
-    --background-color: url("https://www.sixt.se/magazine/wp-content/uploads//sites/14/2021/10/Stockholms_skargard_Roslagen.jpg");
+    --background-color: url("https://images.launchbox-app.com/63d126ab-6ccf-4517-b929-a9d985632d9c.jpg");
     margin: 0;
     padding: 0;
     background: var(--background-color);
