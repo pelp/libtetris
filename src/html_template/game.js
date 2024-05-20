@@ -136,7 +136,7 @@ Module.onRuntimeInitialized = () => {
                 keys.hold,
                 diff * 1000
             ));
-            if (rc != -1) {
+            if (rc !== -1) {
                 Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
                 render();
             }
@@ -150,7 +150,7 @@ Module.onRuntimeInitialized = () => {
                 GRID_WIDTH,
                 GRID_HEIGHT,
                 Math.floor(1000000),
-                170000,
+                166667,
                 33000
             );
             render();
