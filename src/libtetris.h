@@ -18,11 +18,11 @@ typedef struct
 
 typedef struct
 {
-    int current;
-    int order[NUM_PIECES];
+    uint8_t current;
+    uint8_t order[NUM_PIECES];
 } bag_t;
 
-typedef struct 
+typedef struct
 {
     bool rotate_cw;
     bool rotate_ccw;
