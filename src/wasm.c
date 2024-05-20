@@ -9,13 +9,12 @@ EMSCRIPTEN_KEEPALIVE char *interface = NULL;
 EMSCRIPTEN_KEEPALIVE void js_init(
     int width,
     int height,
-    int tick_interval_us,
-    int fall_interval_ticks,
-    int hold_delay_ticks,
-    int hold_interval_ticks
+    int fall_interval_us,
+    int hold_delay_us,
+    int hold_interval_us
 )
 {
-    init(&game, width, height, tick_interval_us, fall_interval_ticks, hold_delay_ticks, hold_interval_ticks);
+    init(&game, width, height, fall_interval_us, hold_delay_us, hold_interval_us);
 }
 
 EMSCRIPTEN_KEEPALIVE int js_lines()
@@ -56,6 +55,11 @@ EMSCRIPTEN_KEEPALIVE int js_next_height()
 EMSCRIPTEN_KEEPALIVE char * js_next()
 {
     return game.next->tiles;
+}
+
+EMSCRIPTEN_KEEPALIVE void js_set_fall_interval(int fall_interval_us)
+{
+    game.fall_interval_us = fall_interval_us;
 }
 
 EMSCRIPTEN_KEEPALIVE int js_tick(bool space, bool down, bool left, bool right, bool rotate_cw, bool rotate_ccw, bool hold, int delta_time_us)

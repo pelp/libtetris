@@ -126,7 +126,7 @@ Module.onRuntimeInitialized = () => {
             // TODO: Get more accurate clock
             const diff = timeStamp - prev
             prev = timeStamp
-            handle(Module._js_tick(
+            const rc = handle(Module._js_tick(
                 keys.space,
                 keys.down,
                 keys.left,
@@ -136,22 +136,22 @@ Module.onRuntimeInitialized = () => {
                 keys.hold,
                 diff * 1000
             ));
-            render();
+            if (rc != -1) {
+                Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
+                render();
+            }
             window.requestAnimationFrame(tick)
         }
         window.requestAnimationFrame(tick)
 
-        const tickrate = 60;
-        const dificulty = 1;
         const restart = () => {
             playing = true;
             Module._js_init(
                 GRID_WIDTH,
                 GRID_HEIGHT,
-                Math.floor(1000000 / tickrate),
-                Math.floor(tickrate * dificulty),
-                15,
-                3
+                Math.floor(1000000),
+                170000,
+                33000
             );
             render();
         };

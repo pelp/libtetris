@@ -136,7 +136,14 @@ int rotate_ccw(tetris_t *game){
     return rotate(game, 3);
 }
 
-void init(tetris_t *game, int width, int height, int tick_interval_us, int fall_interval_ticks, int hold_delay_ticks, int hold_interval_ticks)
+void init(
+    tetris_t *game,
+    int width,
+    int height,
+    int fall_interval_us,
+    int hold_delay_us,
+    int hold_interval_us
+)
 {
     // Seed random generator with time
     srand((unsigned) time(NULL));
@@ -165,12 +172,14 @@ void init(tetris_t *game, int width, int height, int tick_interval_us, int fall_
     game->x = game->width / 2;
     game->y = 0;
     game->lines = 0;
-    game->tick_time_us = 0;
-    game->tick_interval_us = tick_interval_us;
-    game->tick = 0;
-    game->fall_interval_ticks = fall_interval_ticks;
-    game->hold_delay = hold_delay_ticks;
-    game->hold_interval = hold_interval_ticks;
+    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    {
+        ((int*)&game->input_time_us)[i * sizeof(bool)] = 0;
+    }
+    game->fall_interval_us = fall_interval_us;
+    game->fall_time_us = 0;
+    game->hold_delay_us = hold_delay_us;
+    game->hold_interval_us = hold_interval_us;
     set_rotation(game, 0);
     ghost(game);
 }
@@ -292,64 +301,90 @@ char read_game(tetris_t *game, int x, int y)
     }
 }
 
-void increment_hold(tetris_t * game, tetris_inputs_t input)
+void increment_hold(tetris_t * game, tetris_params_t params)
 {
     for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
-        if (((bool*)&input)[i * sizeof(bool)])
+        if (((bool*)&params.inputs)[i * sizeof(bool)])
         {
-            ((int*)&game->input_time)[i * sizeof(bool)]++;
+            ((int*)&game->input_time_us)[i * sizeof(bool)] += params.delta_time_us;
         }
         else
         {
-            ((int*)&game->input_time)[i * sizeof(bool)] = 0;
+            ((int*)&game->input_time_us)[i * sizeof(bool)] = 0;
         }
     }
 }
 
-tetris_inputs_t get_keys(tetris_t * game)
+tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
 {
-    tetris_inputs_t rv;
+    tetris_hold_time_t old_hold = game->input_time_us;
+    increment_hold(game, params);
+    tetris_inputs_t edge;
+    tetris_inputs_t hold;
     for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
-        const int t = ((int*)&game->input_time)[i * sizeof(bool)];
-        ((bool*)&rv)[i * sizeof(bool)] = (
-            t == 1 || // Intial
-            ((t > game->hold_delay) & ((t-game->hold_delay-1) % game->hold_interval == 0)) // Rebound
+        const int t = ((int*)&game->input_time_us)[i * sizeof(bool)];
+        const int old_t = ((int*)&old_hold)[i * sizeof(bool)];
+        ((bool*)&hold)[i * sizeof(bool)] = (
+            t > game->hold_delay_us
         );
+        ((bool*)&edge)[i * sizeof(bool)] = (
+            t > 0 && old_t == 0
+        );
+        if (t > game->hold_delay_us) ((int*)&game->input_time_us)[i * sizeof(bool)] -= game->hold_interval_us;
     }
-    return rv;
+    return (tetris_input_state_t){
+        .hold = hold,
+        .edge = edge
+    };
 }
 
 int tick(tetris_t *game, tetris_params_t params)
 {
-    game->tick_time_us -= params.delta_time_us;
-    if (game->tick_time_us > 0) return -1;
-
-    // Tick barrier
-    game->tick_time_us += game->tick_interval_us;
-    game->tick++;
     // Input hold management
-    increment_hold(game, params.inputs);
-    tetris_inputs_t input = get_keys(game);
+    int rc = -1;
+    tetris_input_state_t state = get_keys(game, params);
 
     // Input logic
-    if (input.down) step(game);
-    if (input.space) {
-        // Fall all the way down
-        while (step(game) == 0);
+    if (state.hold.down || state.edge.down)
+    {
+        rc = step(game);
     }
-    if (input.left) left(game);
-    if (input.right) right(game);
-    if (input.rotate_ccw) rotate_ccw(game);
-    if (input.rotate_cw) rotate_cw(game);
+    if (state.edge.space)
+    {
+        // Fall all the way down
+        while ((rc = step(game)) == 0);
+    }
+    if (state.hold.left || state.edge.left)
+    {
+        rc = 0;
+        left(game);
+    }
+    if (state.hold.right || state.edge.right)
+    {
+        rc = 0;
+        right(game);
+    }
+    if (state.edge.rotate_ccw)
+    {
+        rc = 0;
+        rotate_ccw(game);
+    }
+    if (state.edge.rotate_cw)
+    {
+        rc = 0;
+        rotate_cw(game);
+    }
     // TODO: Implement hold
     // if (input.hold) hold(game);
 
     // Force fall on fall interval
-    if (game->tick % game->fall_interval_ticks == 0)
+    game->fall_time_us -= params.delta_time_us;
+    if (game->fall_time_us <= 0)
     {
-        return step(game);
+        game->fall_time_us += game->fall_interval_us;
+        rc = step(game);
     }
-    return -1;
+    return rc;
 }

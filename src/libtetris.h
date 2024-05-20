@@ -32,13 +32,20 @@ typedef struct
 
 typedef struct
 {
-    int rotate_cw;
-    int rotate_ccw;
-    int hold;
-    int down;
-    int left;
-    int right;
-    int space;
+    tetris_inputs_t edge;
+    tetris_inputs_t hold;
+} tetris_input_state_t;
+
+
+typedef struct
+{
+    unsigned long rotate_cw;
+    unsigned long rotate_ccw;
+    unsigned long hold;
+    unsigned long down;
+    unsigned long left;
+    unsigned long right;
+    unsigned long space;
 } tetris_hold_time_t;
 
 typedef struct
@@ -60,13 +67,11 @@ typedef struct
     translation_t rotated;
     int rotation;
     int lines;
-    int tick_time_us;
-    int tick_interval_us;
-    int tick;
-    int fall_interval_ticks;
-    int hold_delay;
-    int hold_interval;
-    tetris_hold_time_t input_time;
+    int fall_interval_us;
+    int fall_time_us;
+    int hold_delay_us;
+    int hold_interval_us;
+    tetris_hold_time_t input_time_us;
 } tetris_t;
 
 static piece_t PIECE_I = {4, 4, {
@@ -113,8 +118,10 @@ piece_t *grab_piece(bag_t *bag);
 int tile_coord_rotate(tetris_t *game, int x, int y);
 int touching(tetris_t *game, int dx, int dy);
 int set_rotation(tetris_t *game, int rotation);
+void increment_hold(tetris_t * game, tetris_params_t params);
+tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params);
 
 // Public API
 int tick(tetris_t *game, tetris_params_t params);
 char read_game(tetris_t *game, int x, int y);
-void init(tetris_t *game, int width, int height, int tick_interval_us, int fall_interval_ticks, int hold_delay_ticks, int hold_interval_ticks);
+void init(tetris_t *game, int width, int height, int fall_interval_us, int hold_delay_us, int hold_interval_us);
