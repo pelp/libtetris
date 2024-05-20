@@ -8,27 +8,20 @@ const GRID_HEIGHT = 20;
 Module.onRuntimeInitialized = () => {
     let playing = true;
 
-    let keys = {
+    const keys = {
         down: false,
         left: false,
         right: false,
         rotate_cw: false,
         rotate_ccw: false,
         space: false
-    }
+    };
 
     const generate_html = () => {
         const elements = [];
         const shape_elements = [];
 
-        const game = document.querySelector("#game");
-        const wrapper = document.querySelector("#wrapper");
-
-        const info_wrapper = document.querySelector("#info_wrapper");
-        const lines_display = document.querySelector("#lines_display");
         const restart_button = document.querySelector("#restart_button");
-
-        const lb_wrapper = document.querySelector("#lb_wrapper");
         const leaderboard = document.querySelector("#leaderboard");
 
         const name_input = document.querySelector("#name_input");
@@ -68,10 +61,7 @@ Module.onRuntimeInitialized = () => {
             socket.send(JSON.stringify([name, lines]));
         };
 
-        const shape = document.querySelector("#shape");
-
         const lines_span = document.querySelector("#lines_span");
-
         const shape_wrapper = document.querySelector("#shape_wrapper");
 
         let old_w = 0;
@@ -134,9 +124,8 @@ Module.onRuntimeInitialized = () => {
                 keys.rotate_cw,
                 keys.rotate_ccw,
                 keys.hold,
-                diff * 1000
-            ));
-            if (rc !== -1) {
+                diff * 1000));
+            if(rc !== -1){
                 Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
                 render();
             }
@@ -144,6 +133,7 @@ Module.onRuntimeInitialized = () => {
         }
         window.requestAnimationFrame(tick)
 
+        // Restart button
         const restart = () => {
             playing = true;
             Module._js_init(
@@ -151,23 +141,17 @@ Module.onRuntimeInitialized = () => {
                 GRID_HEIGHT,
                 Math.floor(1000000),
                 166667,
-                33000
-            );
+                33000);
             render();
         };
-
         restart();
-
-
-        // Generate info
         restart_button.onclick = event => {
             restart();
         };
 
         // Generate grid
-        const grid_wrapper = document.querySelector("#grid_wrapper");
-
-        const generate_grid = () => {
+        {
+            const grid_wrapper = document.querySelector("#grid_wrapper");
             grid_wrapper.innerHTML = "";
             grid_wrapper.style.gridTemplateColumns = "auto ".repeat(GRID_WIDTH);
             elements.length = 0;
@@ -181,33 +165,32 @@ Module.onRuntimeInitialized = () => {
                     elements.push(e);
                 }
             }
-        };
-
-        generate_grid();
+        }
 
         render();
-
-        return [render, handle];
     };
 
-    const [render, handle] = generate_html();
-    
+    generate_html();
+
     const handle_key = (event, state) => {
         if (!playing) return; // Guard against not playing
         switch (event.code) {
-            case "Space": // Space
+            case "Space":
                 keys.space = state;
                 break;
-            case "ArrowLeft": //Left arrow
+            case "ArrowLeft":
                 keys.left = state;
                 break;
-            case "ControlLeft": // Up arrow
+            case "ControlLeft":
                 keys.rotate_ccw = state;
                 break;
-            case "ArrowUp": // Up arrow
+            case "ShiftLeft":
+                keys.hold = state;
+                break;
+            case "ArrowUp":
                 keys.rotate_cw = state;
                 break;
-            case "ArrowRight": // Right arrow
+            case "ArrowRight":
                 keys.right = state;
                 break;
             case "ArrowDown":
