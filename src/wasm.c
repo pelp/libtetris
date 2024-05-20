@@ -57,6 +57,22 @@ EMSCRIPTEN_KEEPALIVE char * js_next()
     return game.next->tiles;
 }
 
+EMSCRIPTEN_KEEPALIVE int js_hold_width()
+{
+    return game.hold->width;
+}
+
+EMSCRIPTEN_KEEPALIVE int js_hold_height()
+{
+    return game.hold->height;
+}
+
+EMSCRIPTEN_KEEPALIVE char * js_hold()
+{
+    if (game.hold) return game.hold->tiles;
+    return NULL;
+}
+
 EMSCRIPTEN_KEEPALIVE void js_set_fall_interval(time_us_t fall_interval)
 {
     game.fall_interval = fall_interval;

@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include <stdint.h>
 
 #define NUM_PIECES 7
 
@@ -65,6 +66,8 @@ typedef struct
     int ox, oy;
     piece_t *current;
     piece_t *next;
+    piece_t *hold;
+    bool can_hold;
     bag_t bag;
     rotation_t rotated;
     int rotation;

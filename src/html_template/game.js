@@ -62,10 +62,51 @@ Module.onRuntimeInitialized = () => {
         };
 
         const lines_span = document.querySelector("#lines_span");
-        const shape_wrapper = document.querySelector("#shape_wrapper");
 
-        let old_w = 0;
-        let old_h = 0;
+        const render_shape = (parent, index) => {
+            let old_w = parent.dataset.oldW;
+            let old_h = parent.dataset.oldH;
+            let shape_ptr = 0;
+            let shape_width = 0;
+            let shape_height = 0;
+            if (index === -1) {
+                shape_ptr = Module._js_hold();
+                shape_width = Module._js_hold_width();
+                shape_height = Module._js_hold_height();
+            } else {
+                shape_ptr = Module._js_next();
+                shape_width = Module._js_next_width();
+                shape_height = Module._js_next_height();
+            }
+
+            if (shape_ptr > 0 && !(old_w === shape_width && old_h === shape_height)) {
+                old_w = shape_width;
+                old_h = shape_height;
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = "";
+                wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
+                shape_elements.length = 0;
+                for (let i = 0; i < shape_height; i++) {
+                    const line = document.createElement("div");
+                    for (let j = 0; j < shape_width; j++) {
+                        const e = document.createElement("div");
+                        e.classList.add("square");
+                        wrapper.appendChild(e);
+                        shape_elements.push(e);
+                    }
+                }
+                shape_elements.forEach((e, i) => {
+                    e.dataset.tile = Module.HEAP8[i + shape_ptr];
+                });
+                parent.replaceChildren(wrapper);
+                parent.dataset.oldW = old_w;
+                parent.dataset.oldH = old_h;
+            }
+        };
+
+        const next_shape_containers = document.querySelectorAll("[data-next]");
+        const hold_shape_container = document.querySelector("[data-hold]");
+
         const render = () => {
             const ptr = Module._js_get();
             lines_span.innerHTML = Module._js_lines().toString().padStart(3, '0');
@@ -73,29 +114,10 @@ Module.onRuntimeInitialized = () => {
                 e.dataset.tile = Module.HEAP8[i + ptr];
             });
 
-            const shape_width = Module._js_next_width();
-            const shape_height = Module._js_next_height();
-            if (!(old_w === shape_width && old_h === shape_height)) {
-                old_w = shape_width;
-                old_h = shape_height;
-                shape_wrapper.innerHTML = "";
-                shape_wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
-                shape_elements.length = 0;
-                for (let i = 0; i < shape_height; i++) {
-                    const line = document.createElement("div");
-                    for (let j = 0; j < shape_width; j++) {
-                        const e = document.createElement("div");
-                        e.classList.add("square");
-                        shape_wrapper.appendChild(e);
-                        shape_elements.push(e);
-                    }
-                }
+            for (const shape_container of next_shape_containers) {
+                render_shape(shape_container);
             }
-            const shape_ptr = Module._js_next();
-
-            shape_elements.forEach((e, i) => {
-                e.dataset.tile = Module.HEAP8[i + shape_ptr];
-            });
+            render_shape(hold_shape_container, -1);
         };
 
         const handle = rc => {
@@ -113,21 +135,24 @@ Module.onRuntimeInitialized = () => {
 
         let prev;
         const tick = (timeStamp) => {
-            // TODO: Get more accurate clock
-            const diff = timeStamp - prev
-            prev = timeStamp
-            const rc = handle(Module._js_tick(
-                keys.space,
-                keys.down,
-                keys.left,
-                keys.right,
-                keys.rotate_cw,
-                keys.rotate_ccw,
-                keys.hold,
-                diff * 1000));
-            if(rc !== -1){
-                Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
-                render();
+            if (playing) {
+                // TODO: Get more accurate clock
+                // TODO: Handle game restart properly
+                const diff = timeStamp - prev
+                prev = timeStamp
+                const rc = handle(Module._js_tick(
+                    keys.space,
+                    keys.down,
+                    keys.left,
+                    keys.right,
+                    keys.rotate_cw,
+                    keys.rotate_ccw,
+                    keys.hold,
+                    diff * 1000));
+                if (rc !== -1) {
+                    Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
+                    render();
+                }
             }
             window.requestAnimationFrame(tick)
         }

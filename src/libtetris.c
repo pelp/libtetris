@@ -1,6 +1,5 @@
 #include "libtetris.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <time.h>
 
 int step(tetris_t *game);
@@ -19,6 +18,7 @@ int touching(tetris_t *game, int dx, int dy);
 int set_rotation(tetris_t *game, int rotation);
 void increment_hold(tetris_t * game, tetris_params_t params);
 tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params);
+void reset_piece_position(tetris_t *game);
 
 void generate_bag(bag_t *bag)
 {
@@ -152,6 +152,33 @@ int rotate_cw(tetris_t *game){
 int rotate_ccw(tetris_t *game){
     return rotate(game, 3);
 }
+int hold(tetris_t *game){
+    if (!game->can_hold) return 0;
+    if (game->hold){
+        piece_t *held_piece = game->hold;
+        game->hold = game->current;
+        game->current = held_piece;
+        reset_piece_position(game);
+    }else{
+        game->hold = game->current;
+        place_piece(game);
+    }
+    return 1;
+}
+void place_piece(tetris_t *game)
+{
+    game->current = grab_piece(&game->bag);
+    game->next = peek_piece(&game->bag);
+    reset_piece_position(game);
+}
+void reset_piece_position(tetris_t *game)
+{
+    game->y = 0;
+    game->x = game->width / 2;
+    set_rotation(game, 0);
+    ghost(game);
+}
+
 
 void init(
     tetris_t *game,
@@ -185,11 +212,13 @@ void init(
     generate_bag(&game->bag);
     game->current = grab_piece(&game->bag);
     game->next = peek_piece(&game->bag);
+    game->hold = NULL;
+    game->can_hold = true;
 
     game->x = game->width / 2;
     game->y = 0;
     game->lines = 0;
-    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
         ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
     }
@@ -199,15 +228,6 @@ void init(
     game->automatic_repeat_rate = automatic_repeat_rate;
     set_rotation(game, 0);
     ghost(game);
-}
-
-void place_piece(tetris_t *game)
-{
-    game->y = 0;
-    game->x = game->width / 2;
-    game->current = grab_piece(&game->bag);
-    game->next = peek_piece(&game->bag);
-    set_rotation(game, 0);
 }
 
 int solidify(tetris_t *game)
@@ -276,7 +296,6 @@ int step(tetris_t *game)
         }
         // Next piece
         place_piece(game);
-        ghost(game);
         return 2;
     }
 
@@ -320,7 +339,7 @@ char read_game(tetris_t *game, int x, int y)
 
 void increment_hold(tetris_t * game, tetris_params_t params)
 {
-    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
         if (((bool*)&params.inputs)[i * sizeof(bool)])
         {
@@ -339,7 +358,7 @@ tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
     increment_hold(game, params);
     tetris_inputs_t edge;
     tetris_inputs_t hold;
-    for (int i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
         const int t = ((time_us_t*)&game->input_time)[i * sizeof(bool)];
         const int old_t = ((time_us_t*)&old_hold)[i * sizeof(bool)];
@@ -393,12 +412,15 @@ int tick(tetris_t *game, tetris_params_t params)
         rc = 0;
         rotate_cw(game);
     }
-    // TODO: Implement hold
-    // if (input.hold) hold(game);
+    if (state.edge.hold)
+    {
+        rc = 0;
+        hold(game);
+    }
 
     // Force fall on fall interval
     game->fall_time -= params.delta_time;
-    if (game->fall_time <= 0)
+    while (game->fall_time <= 0)
     {
         game->fall_time += game->fall_interval;
         rc = step(game);
