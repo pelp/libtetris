@@ -9,12 +9,12 @@ EMSCRIPTEN_KEEPALIVE char *interface = NULL;
 EMSCRIPTEN_KEEPALIVE void js_init(
     int width,
     int height,
-    int fall_interval_us,
-    int hold_delay_us,
-    int hold_interval_us
+    time_us_t fall_interval,
+    time_us_t delayed_auto_shift,
+    time_us_t automatic_repeat_rate
 )
 {
-    init(&game, width, height, fall_interval_us, hold_delay_us, hold_interval_us);
+    init(&game, width, height, fall_interval, delayed_auto_shift, automatic_repeat_rate);
 }
 
 EMSCRIPTEN_KEEPALIVE int js_lines()
@@ -57,12 +57,21 @@ EMSCRIPTEN_KEEPALIVE char * js_next()
     return game.next->tiles;
 }
 
-EMSCRIPTEN_KEEPALIVE void js_set_fall_interval(int fall_interval_us)
+EMSCRIPTEN_KEEPALIVE void js_set_fall_interval(time_us_t fall_interval)
 {
-    game.fall_interval_us = fall_interval_us;
+    game.fall_interval = fall_interval;
 }
 
-EMSCRIPTEN_KEEPALIVE int js_tick(bool space, bool down, bool left, bool right, bool rotate_cw, bool rotate_ccw, bool hold, int delta_time_us)
+EMSCRIPTEN_KEEPALIVE int js_tick(
+        bool space,
+        bool down,
+        bool left,
+        bool right,
+        bool rotate_cw,
+        bool rotate_ccw,
+        bool hold,
+        time_us_t delta_time
+)
 {
     return tick(&game, (tetris_params_t){
         .inputs = (tetris_inputs_t){
@@ -74,6 +83,6 @@ EMSCRIPTEN_KEEPALIVE int js_tick(bool space, bool down, bool left, bool right, b
             .rotate_cw = rotate_cw,
             .hold = hold
         },
-        .delta_time_us = delta_time_us
+        .delta_time = delta_time
     });
 }
