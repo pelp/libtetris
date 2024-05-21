@@ -4,15 +4,19 @@
 <script type="text/javascript" src="game.js"></script>
 <body>
 
-<div id="game" class="game">
+<div class="game">
     <div class="side-bar">
-        <div class="shape">
-            <div></div>
-        </div>
+        <span class="header">HOLD</span>
+        <div data-hold class="shape"></div>
+        <span class="header">USER</span>
+        <label for="name_input">
+            <input id="name_input">
+        </label>
+        <div id="leaderboard"></div>
     </div>
-    <div id="wrapper" class="wrapper">
-        <div id="info_wrapper" class="info_wrapper">
-            <div id="lines_display" class="text_info">
+    <div class="wrapper">
+        <div class="info_wrapper">
+            <div class="text_info">
                 <div id="lines_span"></div>
             </div>
             <div id="restart_button" class="restart">Restart</div>
@@ -20,18 +24,15 @@
         <div id="grid_wrapper" class="grid_wrapper">
         </div>
     </div>
-    <div id="lb_wrapper" class="side-bar">
-        <div id="shape" class="shape">
-            <div id="shape_wrapper">
-            </div>
-        </div>
-        <label for="name_input">
-            <input id="name_input">
-        </label>
-        <div id="leaderboard"></div>
+    <div class="side-bar">
+        <span class="header">NEXT</span>
+        <div data-next class="shape"></div>
+        <div data-next class="shape"></div>
+        <div data-next class="shape"></div>
+        <div data-next class="shape"></div>
+        <div data-next class="shape"></div>
     </div>
 </div>
-
 
 {{{ SCRIPT }}}
 </body>

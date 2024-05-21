@@ -8,27 +8,20 @@ const GRID_HEIGHT = 20;
 Module.onRuntimeInitialized = () => {
     let playing = true;
 
-    let keys = {
+    const keys = {
         down: false,
         left: false,
         right: false,
         rotate_cw: false,
         rotate_ccw: false,
         space: false
-    }
+    };
 
     const generate_html = () => {
         const elements = [];
         const shape_elements = [];
 
-        const game = document.querySelector("#game");
-        const wrapper = document.querySelector("#wrapper");
-
-        const info_wrapper = document.querySelector("#info_wrapper");
-        const lines_display = document.querySelector("#lines_display");
         const restart_button = document.querySelector("#restart_button");
-
-        const lb_wrapper = document.querySelector("#lb_wrapper");
         const leaderboard = document.querySelector("#leaderboard");
 
         const name_input = document.querySelector("#name_input");
@@ -68,14 +61,54 @@ Module.onRuntimeInitialized = () => {
             socket.send(JSON.stringify([name, lines]));
         };
 
-        const shape = document.querySelector("#shape");
-
         const lines_span = document.querySelector("#lines_span");
 
-        const shape_wrapper = document.querySelector("#shape_wrapper");
+        const render_shape = (parent, index) => {
+            let old_w = parseInt(parent.dataset.oldW);
+            let old_h = parseInt(parent.dataset.oldH);
+            let old_shape = parseInt(parent.dataset.oldShape);
+            let shape_ptr = 0;
+            let shape_width;
+            let shape_height;
+            if (index === -1) {
+                shape_ptr = Module._js_hold();
+                shape_width = Module._js_hold_width();
+                shape_height = Module._js_hold_height();
+            } else {
+                shape_ptr = Module._js_next(index);
+                shape_width = Module._js_next_width(index);
+                shape_height = Module._js_next_height(index);
+            }
 
-        let old_w = 0;
-        let old_h = 0;
+            if (shape_ptr === 0) {
+                parent.replaceChildren();
+            } else if (old_w !== shape_width || old_h !== shape_height || old_shape !== shape_ptr) {
+                const wrapper = document.createElement("div");
+                wrapper.innerHTML = "";
+                wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
+                shape_elements.length = 0;
+                for (let i = 0; i < shape_height; i++) {
+                    const line = document.createElement("div");
+                    for (let j = 0; j < shape_width; j++) {
+                        const e = document.createElement("div");
+                        e.classList.add("square");
+                        wrapper.appendChild(e);
+                        shape_elements.push(e);
+                    }
+                }
+                shape_elements.forEach((e, i) => {
+                    e.dataset.tile = Module.HEAP8[i + shape_ptr];
+                });
+                parent.replaceChildren(wrapper);
+                parent.dataset.oldW = shape_width;
+                parent.dataset.oldH = shape_height;
+                parent.dataset.oldShape = shape_ptr;
+            }
+        };
+
+        const next_shape_containers = document.querySelectorAll("[data-next]");
+        const hold_shape_container = document.querySelector("[data-hold]");
+
         const render = () => {
             const ptr = Module._js_get();
             lines_span.innerHTML = Module._js_lines().toString().padStart(3, '0');
@@ -83,29 +116,10 @@ Module.onRuntimeInitialized = () => {
                 e.dataset.tile = Module.HEAP8[i + ptr];
             });
 
-            const shape_width = Module._js_next_width();
-            const shape_height = Module._js_next_height();
-            if (!(old_w === shape_width && old_h === shape_height)) {
-                old_w = shape_width;
-                old_h = shape_height;
-                shape_wrapper.innerHTML = "";
-                shape_wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
-                shape_elements.length = 0;
-                for (let i = 0; i < shape_height; i++) {
-                    const line = document.createElement("div");
-                    for (let j = 0; j < shape_width; j++) {
-                        const e = document.createElement("div");
-                        e.classList.add("square");
-                        shape_wrapper.appendChild(e);
-                        shape_elements.push(e);
-                    }
-                }
-            }
-            const shape_ptr = Module._js_next();
-
-            shape_elements.forEach((e, i) => {
-                e.dataset.tile = Module.HEAP8[i + shape_ptr];
+            next_shape_containers.forEach((shape_container, index) => {
+                render_shape(shape_container, index);
             });
+            render_shape(hold_shape_container, -1);
         };
 
         const handle = rc => {
@@ -123,27 +137,30 @@ Module.onRuntimeInitialized = () => {
 
         let prev;
         const tick = (timeStamp) => {
-            // TODO: Get more accurate clock
             const diff = timeStamp - prev
             prev = timeStamp
-            const rc = handle(Module._js_tick(
-                keys.space,
-                keys.down,
-                keys.left,
-                keys.right,
-                keys.rotate_cw,
-                keys.rotate_ccw,
-                keys.hold,
-                diff * 1000
-            ));
-            if (rc !== -1) {
-                Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
-                render();
+
+            if (playing) {
+                console.log(keys.space);
+                const rc = handle(Module._js_tick(
+                    keys.space,
+                    keys.down,
+                    keys.left,
+                    keys.right,
+                    keys.rotate_cw,
+                    keys.rotate_ccw,
+                    keys.hold,
+                    diff * 1000));
+                if (rc !== -1) {
+                    Module._js_set_fall_interval(1000 * (1000 - 10 * Module._js_lines()))
+                    render();
+                }
             }
             window.requestAnimationFrame(tick)
         }
         window.requestAnimationFrame(tick)
 
+        // Restart button
         const restart = () => {
             playing = true;
             Module._js_init(
@@ -151,23 +168,17 @@ Module.onRuntimeInitialized = () => {
                 GRID_HEIGHT,
                 Math.floor(1000000),
                 166667,
-                33000
-            );
+                33000);
             render();
         };
-
         restart();
-
-
-        // Generate info
         restart_button.onclick = event => {
             restart();
         };
 
         // Generate grid
-        const grid_wrapper = document.querySelector("#grid_wrapper");
-
-        const generate_grid = () => {
+        {
+            const grid_wrapper = document.querySelector("#grid_wrapper");
             grid_wrapper.innerHTML = "";
             grid_wrapper.style.gridTemplateColumns = "auto ".repeat(GRID_WIDTH);
             elements.length = 0;
@@ -181,43 +192,42 @@ Module.onRuntimeInitialized = () => {
                     elements.push(e);
                 }
             }
-        };
-
-        generate_grid();
+        }
 
         render();
-
-        return [render, handle];
     };
 
-    const [render, handle] = generate_html();
-    
-    const handle_key = (event, state) => {
-        if (!playing) return; // Guard against not playing
+    generate_html();
+
+    const handle_key = (event, down) => {
+        if (down && !playing) return; // Guard against not playing
         switch (event.code) {
-            case "Space": // Space
-                keys.space = state;
+            case "Space":
+                keys.space = down;
                 break;
-            case "ArrowLeft": //Left arrow
-                keys.left = state;
+            case "ArrowLeft":
+                keys.left = down;
                 break;
-            case "ControlLeft": // Up arrow
-                keys.rotate_ccw = state;
+            case "ControlLeft":
+                keys.rotate_ccw = down;
                 break;
-            case "ArrowUp": // Up arrow
-                keys.rotate_cw = state;
+            case "ShiftLeft":
+                keys.hold = down;
                 break;
-            case "ArrowRight": // Right arrow
-                keys.right = state;
+            case "ArrowUp":
+                keys.rotate_cw = down;
+                break;
+            case "ArrowRight":
+                keys.right = down;
                 break;
             case "ArrowDown":
-                keys.down = state;
+                keys.down = down;
                 break;
             default:
                 console.log(event.code);
                 break;
         }
     }
-    document.onkeydown = event => handle_key(event, true)
-    document.onkeyup = event => handle_key(event, false)
+    document.onkeydown = event => handle_key(event, true);
+    document.onkeyup = event => handle_key(event, false);
 };

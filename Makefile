@@ -1,5 +1,6 @@
 CC=gcc
 CC_FLAGS=-c -Werror -Wall -Wextra
+EMCC_FLAGS=-Wall -Werror -Wextra
 EXE_NAME=tetris
 OUTPUT_DIR=output
 SRC_DIR=src
@@ -28,14 +29,14 @@ link: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
 wasm: output font $(OUTPUT_DIR)/www/index.html $(OUTPUT_DIR)/www/style.css $(OUTPUT_DIR)/www/game.js venv
 
 font:
-	cp $(SRC_DIR)/digital-7.mono.ttf $(OUTPUT_DIR)/www/
+	cp $(SRC_DIR)/html_template/digital-7.mono.ttf $(OUTPUT_DIR)/www/
 
 $(OUTPUT_DIR)/www/style.css: $(SRC_DIR)/html_template/style.css
 	cp $(SRC_DIR)/html_template/style.css $(OUTPUT_DIR)/www/style.css
 $(OUTPUT_DIR)/www/game.js: $(SRC_DIR)/html_template/game.js
 	cp $(SRC_DIR)/html_template/game.js $(OUTPUT_DIR)/www/game.js
 $(OUTPUT_DIR)/www/index.html: emsdk $(SRC_DIR)/html_template/template.html
-	source $(BUILD_DIR)/emsdk/emsdk_env.sh && emcc $(SRC_DIR)/libtetris.c $(SRC_DIR)/wasm.c -o $(OUTPUT_DIR)/www/index.html --shell-file $(SRC_DIR)/html_template/template.html -s NO_EXIT_RUNTIME=1 -s "EXPORTED_RUNTIME_METHODS=['ccall']"
+	source $(BUILD_DIR)/emsdk/emsdk_env.sh && emcc $(EMCC_FLAGS) $(SRC_DIR)/libtetris.c $(SRC_DIR)/wasm.c -o $(OUTPUT_DIR)/www/index.html --shell-file $(SRC_DIR)/html_template/template.html -s NO_EXIT_RUNTIME=1 -s "EXPORTED_RUNTIME_METHODS=['ccall']"
 
 emsdk:
 ifeq ("$(wildcard $(BUILD_DIR)/emsdk)","")

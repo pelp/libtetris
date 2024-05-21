@@ -1,6 +1,9 @@
 #include <stdbool.h>
+#include <stdint.h>
 
+// We assume the number of pieces in the bag to be greater than the number of next pieces to preview
 #define NUM_PIECES 7
+#define NUM_NEXT_PIECES 5
 
 typedef int time_us_t;
 
@@ -18,11 +21,12 @@ typedef struct
 
 typedef struct
 {
-    int current;
-    int order[NUM_PIECES];
+    uint8_t current;
+    uint8_t order[NUM_PIECES];
+    uint8_t next[NUM_NEXT_PIECES];
 } bag_t;
 
-typedef struct 
+typedef struct
 {
     bool rotate_cw;
     bool rotate_ccw;
@@ -64,7 +68,8 @@ typedef struct
     int ghosty;
     int ox, oy;
     piece_t *current;
-    piece_t *next;
+    piece_t *hold;
+    bool can_hold;
     bag_t bag;
     rotation_t rotated;
     int rotation;

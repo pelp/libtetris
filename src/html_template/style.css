@@ -2,15 +2,17 @@
     font-family: Calculator;
     src: url(digital-7.mono.ttf);
 }
+
 * {
     box-sizing: border-box;
+    font-family: var(--info-font);
 }
+
 body {
     --info-font: 'Calculator', sans-serif;
-    --game-font: monospace;
     --cover-color: #999;
     --uncover-color: #CCC;
-    --background-color: url("https://www.sixt.se/magazine/wp-content/uploads//sites/14/2021/10/Stockholms_skargard_Roslagen.jpg");
+    --background-color: url("https://images.launchbox-app.com/63d126ab-6ccf-4517-b929-a9d985632d9c.jpg");
     margin: 0;
     padding: 0;
     background: var(--background-color);
@@ -22,199 +24,234 @@ body {
     width: 100vw;
     height: 100vh;
 }
-.side-bar{
+
+.header {
+    font-size: 2rem;
+    text-align: center;
+}
+
+.side-bar {
     display: flex;
     flex-direction: column;
     height: auto;
-    width: 120px;
+    width: 128px;
+
+    input {
+        font-family: var(--info-font);
+        width: 100%;
+        border-style: inset;
+        border-color: var(--uncover-color);
+        border-width: 3px;
+        background: black;
+        color: red;
+        font-size: 20px;
+        height: 30px;
+    }
+
+    & > div {
+        font-family: var(--info-font);
+        margin-top: 5px;
+        border-style: inset;
+        border-color: var(--uncover-color);
+        border-width: 3px;
+        color: red;
+        background: black;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+
+        & > span {
+            & > span:nth-child(1) {
+                float: left;
+            }
+
+            & > span:nth-child(2) {
+                float: right;
+            }
+        }
+    }
+
+    & > .shape {
+        margin-top: 0;
+        margin-bottom: 5px;
+        flex-grow: 0;
+    }
 }
+
 .wrapper {
     display: flex;
     align-items: center;
     flex-direction: column;
     width: fit-content;
 }
+
 .game {
     display: flex;
     gap: 5px;
     align-items: stretch;
+
+    & > div {
+        background: var(--cover-color);
+        border-style: outset;
+        border-color: var(--uncover-color);
+        border-width: 3px;
+        box-shadow: 0 5px 5px rgba(0, 0, 0, 0.4);
+        padding: 5px;
+    }
 }
-.game > div {
-    background: var(--cover-color);
-    border-style: outset;
-    border-color: var(--uncover-color);
-    border-width: 3.5px;
-    box-shadow: 0px 5px 5px rgba(0, 0, 0, 0.4);
-    padding: 5px;
-}
-#lb_wrapper input {
-    font-family: var(--info-font);
-    width: 100%;
-    border-style: inset;
-    border-color: var(--uncover-color);
-    border-width: 3.5px;
-    background: black;
-    color: red;
-    font-size: 20px;
-    height: 30px;
-}
-#lb_wrapper > div {
-    font-family: var(--info-font);
-    margin-top: 5px;
-    border-style: inset;
-    border-color: var(--uncover-color);
-    border-width: 3.5px;
-    color: red;
-    background: black;
-    flex-grow: 1;
-    color: red;
-    display: flex;
-    flex-direction: column;
-}
-#lb_wrapper > .shape {
-    margin-top: 0;
-    margin-bottom: 5px;
-    flex-grow: 0;
-}
-#lb_wrapper > div > span > span:nth-child(1) {
-    float: left;
-}
-#lb_wrapper > div > span > span:nth-child(2) {
-    float: right;
-}
+
 .info_wrapper {
     width: 100%;
     background: var(--cover-color);
     border-style: inset;
     border-color: var(--uncover-color);
-    border-width: 3.5px;
+    border-width: 3px;
     margin-bottom: 5px;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     padding: 2px;
+
+    & > div {
+        border-style: outset;
+        border-color: var(--uncover-color);
+        border-width: 3px;
+        user-select: none;
+        font-family: var(--info-font);
+    }
 }
-.info_wrapper > div {
-    border-style: outset;
-    border-color: var(--uncover-color);
-    border-width: 3.5px;
-    user-select: none;
-    font-family: var(--info-font);
-}
+
+
 .text_info {
     font-size: 40px;
     text-align: right;
+
+    & > div {
+        height: 40px;
+        padding: 1px 2px 2px;
+        border-style: inset;
+        border-color: var(--uncover-color);
+        border-width: 3px;
+        color: red;
+        background: black;
+    }
 }
-.text_info > div {
-    height: 40px;
-    padding: 2px;
-    padding-top: 1px;
-    border-style: inset;
-    border-color: var(--uncover-color);
-    border-width: 3.5px;
-    color: red;
-    background: black;
-}
+
+
 .restart {
     vertical-align: middle;
     font-size: 30px;
     text-align: center;
     padding: 2px;
+
+    &:hover {
+        cursor: pointer;
+    }
+
+    &:active {
+        border-style: inset;
+    }
 }
-.restart:hover {
-    cursor: pointer;
-}
-.restart:active {
-    border-style: inset;
-}
+
 .grid_wrapper {
     display: grid;
-    grid-gap: 0px;
+    grid-gap: 0;
     align-items: center;
     justify-items: center;
     width: fit-content;
     border-style: inset;
     border-color: var(--uncover-color);
-    border-width: 3.5px;
-    font-family: var(--game-font);
+    border-width: 3px;
     font-size: 20px;
     font-weight: bold;
     background: black;
 }
+
 .square {
     background: black;
     height: 30px;
     width: 30px;
     border-width: 5px;
     border-style: none;
+
+    &[data-tile="1"] {
+        border-style: outset;
+        background-color: yellow;
+        border-color: yellow;
+    }
+
+    &[data-tile="2"] {
+        border-style: outset;
+        background-color: cyan;
+        border-color: cyan;
+    }
+
+    &[data-tile="3"] {
+        border-style: outset;
+        background-color: blue;
+        border-color: blue;
+    }
+
+    &[data-tile="4"] {
+        border-style: outset;
+        background-color: orange;
+        border-color: orange;
+    }
+
+    &[data-tile="5"] {
+        border-style: outset;
+        background-color: red;
+        border-color: red;
+    }
+
+    &[data-tile="6"] {
+        border-style: outset;
+        background-color: lime;
+        border-color: lime;
+    }
+
+    &[data-tile="7"] {
+        border-style: outset;
+        background-color: magenta;
+        border-color: magenta;
+    }
+
+    &[data-tile="10"] {
+        background-color: black;
+        border-color: gray;
+        border-style: dashed;
+        border-width: 2px;
+    }
 }
+
 .grid_wrapper .square[data-tile="0"] {
     border-style: solid;
     border-width: 1px;
     border-color: rgba(255, 255, 255, 0.1);
 }
-.square[data-tile="1"] {
-    border-style: outset;
-    background-color: yellow;
-    border-color: yellow;
-}
-.square[data-tile="2"] {
-    border-style: outset;
-    background-color: cyan;
-    border-color: cyan;
-}
-.square[data-tile="3"] {
-    border-style: outset;
-    background-color: blue;
-    border-color: blue;
-}
-.square[data-tile="4"] {
-    border-style: outset;
-    background-color: orange;
-    border-color: orange;
-}
-.square[data-tile="5"] {
-    border-style: outset;
-    background-color: red;
-    border-color: red;
-}
-.square[data-tile="6"] {
-    border-style: outset;
-    background-color: lime;
-    border-color: lime;
-}
-.square[data-tile="7"] {
-    border-style: outset;
-    background-color: magenta;
-    border-color: magenta;
-}
-.square[data-tile="10"] {
-    border-style: outset;
-    background-color: black;
-    border-color: gray;
-    border-style: dashed;
-    border-width: 2px;
-}
+
 .shape {
     height: 75px;
     border-style: inset;
     border-color: var(--uncover-color);
-    border-width: 3.5px;
+    border-width: 3px;
     background: black;
     display: flex !important;
     justify-content: center !important;
     align-items: center !important;
-}
-.shape > div {
-    display: grid;
-    grid-gap: 0px;
-    align-items: center;
-    justify-items: center;
-    width: fit-content;
-}
-.shape > div > div {
-    width: 15px;
-    height: 15px;
-    border-width: 3px;
+
+    & > div {
+        display: grid;
+        grid-gap: 0;
+        align-items: center;
+        justify-items: center;
+        width: fit-content;
+
+        & > div {
+            width: 15px;
+            height: 15px;
+            border-width: 3px;
+        }
+    }
 }

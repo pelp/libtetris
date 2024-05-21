@@ -42,19 +42,43 @@ EMSCRIPTEN_KEEPALIVE char * js_get()
     return interface;
 }
 
-EMSCRIPTEN_KEEPALIVE int js_next_width()
+EMSCRIPTEN_KEEPALIVE int js_next_width(int index)
 {
-    return game.next->width;
+    if(index >= 0 && index < NUM_NEXT_PIECES){
+        return pieces[game.bag.next[index]]->width;
+    }
+    return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE int js_next_height()
+EMSCRIPTEN_KEEPALIVE int js_next_height(int index)
 {
-    return game.next->height;
+    if(index >= 0 && index < NUM_NEXT_PIECES){
+        return pieces[game.bag.next[index]]->height;
+    }
+    return 0;
 }
 
-EMSCRIPTEN_KEEPALIVE char * js_next()
+EMSCRIPTEN_KEEPALIVE char * js_next(int index)
 {
-    return game.next->tiles;
+    if(index >= 0 && index < NUM_NEXT_PIECES){
+        return pieces[game.bag.next[index]]->tiles;
+    }
+    return NULL;
+}
+
+EMSCRIPTEN_KEEPALIVE int js_hold_width()
+{
+    return game.hold ? game.hold->width : 0;
+}
+
+EMSCRIPTEN_KEEPALIVE int js_hold_height()
+{
+    return game.hold ? game.hold->height : 0;
+}
+
+EMSCRIPTEN_KEEPALIVE char * js_hold()
+{
+    return game.hold ? game.hold->tiles : NULL;
 }
 
 EMSCRIPTEN_KEEPALIVE void js_set_fall_interval(time_us_t fall_interval)
