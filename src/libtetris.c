@@ -106,16 +106,20 @@ int touching(tetris_t *game, int dx, int dy)
         for (int j = 0; j < game->rotated.width; j++)
         {
             int piece_coord = tile_coord_rotate(game, j, i);
+            if (piece_coord < 0 || piece_coord >= game->current->height * game->current->width) continue;
             if (game->current->tiles[piece_coord] == 0) continue;
             int game_coord = (i + oy) * game->width + // y
                              j + ox; // x
-            if ((i + oy >= game->height) ||
-                (j + ox >= game->width) ||
-                (j + ox < 0) ||
-                (game->tiles[game_coord] > 0))
-            {
-                return 0;
-            }
+
+            const bool inside_width = (j + ox >= 0 && j + ox < game->width);
+            const bool in_air = (i + oy < game->height);
+            const bool above_map = (i + oy < 0);
+
+            // Check boundries
+            if (!inside_width) return 0;
+            if (!in_air) return 0;
+            if (above_map) continue;
+            if (game->tiles[game_coord] > 0) return 0;
         }
     }
     return 1;
