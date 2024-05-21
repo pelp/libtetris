@@ -4,15 +4,14 @@
 #include <time.h>
 #include <stdio.h>
 
-void test(){
-    printf("HELLO LUA CAN YOU HEAR ME?!");
+TETRIS_API void *create_game(){
+    printf("Creating game...\n");
+    void* data = malloc(sizeof(tetris_t));
+    memset(data, 0, sizeof(tetris_t));
+    return data;
 }
-tetris_t *create_game(){
-    printf("Creating game...");
-    return (tetris_t*)malloc(sizeof(tetris_t));
-}
-void destroy_game(tetris_t* game){
-    printf("Destroying game...");
+TETRIS_API void destroy_game(void* game){
+    printf("Destroying game...\n");
     free(game);
 }
 
@@ -215,7 +214,7 @@ void reset_piece_position(tetris_t *game)
 }
 
 
-void init(
+TETRIS_API void init(
     tetris_t *game,
     int width,
     int height,
@@ -338,7 +337,7 @@ int step(tetris_t *game)
     return 0;
 }
 
-char read_game(tetris_t *game, int x, int y)
+TETRIS_API char read_game(tetris_t *game, int x, int y)
 {
     int piece_coord_y = y - game->y - game->oy;
     int ghost_coord_y = y - game->ghosty - game->oy;
@@ -410,7 +409,7 @@ tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
     };
 }
 
-int tick(tetris_t *game, tetris_params_t params)
+TETRIS_API int tick(tetris_t *game, tetris_params_t params)
 {
     // Input hold management
     int rc = -1;

@@ -1,6 +1,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef _WIN32
+    #define TETRIS_API __declspec(dllexport)
+#elif __GNUC__ >= 4
+    #define TETRIS_API __attribute__ ((visibility ("default")))
+#else
+    #define TETRIS_API
+#endif
+
 // We assume the number of pieces in the bag to be greater than the number of next pieces to preview
 #define NUM_PIECES 7
 #define NUM_NEXT_PIECES 5
@@ -112,11 +120,11 @@ static piece_t PIECE_Z = {3, 3, {
 static piece_t *pieces[] = {&PIECE_I, &PIECE_J, &PIECE_L, &PIECE_O, &PIECE_S, &PIECE_T, &PIECE_Z};
 
 // Public API
-tetris_t *create_game();
-void destroy_game(tetris_t* game);
-int tick(tetris_t *game, tetris_params_t params);
-char read_game(tetris_t *game, int x, int y);
-void init(tetris_t *game,
+TETRIS_API void *create_game();
+TETRIS_API void destroy_game(void* game);
+TETRIS_API int tick(tetris_t *game, tetris_params_t params);
+TETRIS_API char read_game(tetris_t *game, int x, int y);
+TETRIS_API void init(tetris_t *game,
           int width,
           int height,
           time_us_t fall_interval,
