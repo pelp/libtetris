@@ -2,6 +2,19 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <stdio.h>
+
+void test(){
+    printf("HELLO LUA CAN YOU HEAR ME?!");
+}
+tetris_t *create_game(){
+    printf("Creating game...");
+    return (tetris_t*)malloc(sizeof(tetris_t));
+}
+void destroy_game(tetris_t* game){
+    printf("Destroying game...");
+    free(game);
+}
 
 int step(tetris_t *game);
 int rotate(tetris_t *game, char amount);

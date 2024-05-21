@@ -1,5 +1,5 @@
 CC=gcc
-CC_FLAGS=-c -Werror -Wall -Wextra
+CC_FLAGS=-c -Werror -Wall -Wextra -fPIC
 EMCC_FLAGS=-Wall -Werror -Wextra
 EXE_NAME=tetris
 OUTPUT_DIR=output
@@ -18,13 +18,16 @@ output:
 
 
 $(BUILD_DIR)/libtetris.o: $(SRC_DIR)/libtetris.c
-	cd $(BUILD_DIR) && $(CC) $(CC_FLAGS) ../$(SRC_DIR)/libtetris.c
+	$(CC) $(CC_FLAGS) $^ -o $@
 
 $(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
 	cd $(BUILD_DIR) && $(CC) $(CC_FLAGS) ../$(SRC_DIR)/main.c
 
 link: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
 	$(CC) $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o -lncurses -o $(OUTPUT_DIR)/$(EXE_NAME)
+
+lib: output $(BUILD_DIR)/libtetris.o
+	$(CC) -shared -o $(BUILD_DIR)/libtetris.so $(BUILD_DIR)/libtetris.o
 
 wasm: output font $(OUTPUT_DIR)/www/index.html $(OUTPUT_DIR)/www/style.css $(OUTPUT_DIR)/www/game.js venv
 

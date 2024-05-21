@@ -112,6 +112,8 @@ static piece_t PIECE_Z = {3, 3, {
 static piece_t *pieces[] = {&PIECE_I, &PIECE_J, &PIECE_L, &PIECE_O, &PIECE_S, &PIECE_T, &PIECE_Z};
 
 // Public API
+tetris_t *create_game();
+void destroy_game(tetris_t* game);
 int tick(tetris_t *game, tetris_params_t params);
 char read_game(tetris_t *game, int x, int y);
 void init(tetris_t *game,
