@@ -75,12 +75,14 @@ Module.onRuntimeInitialized = () => {
                 shape_width = Module._js_hold_width();
                 shape_height = Module._js_hold_height();
             } else {
-                shape_ptr = Module._js_next();
-                shape_width = Module._js_next_width();
-                shape_height = Module._js_next_height();
+                shape_ptr = Module._js_next(index);
+                shape_width = Module._js_next_width(index);
+                shape_height = Module._js_next_height(index);
             }
 
-            if (shape_ptr > 0 && (old_w !== shape_width || old_h !== shape_height || old_shape !== shape_ptr)) {
+            if (shape_ptr === 0) {
+                parent.replaceChildren();
+            } else if (old_w !== shape_width || old_h !== shape_height || old_shape !== shape_ptr) {
                 const wrapper = document.createElement("div");
                 wrapper.innerHTML = "";
                 wrapper.style.gridTemplateColumns = "auto ".repeat(shape_width);
@@ -114,9 +116,9 @@ Module.onRuntimeInitialized = () => {
                 e.dataset.tile = Module.HEAP8[i + ptr];
             });
 
-            for (const shape_container of next_shape_containers) {
-                render_shape(shape_container);
-            }
+            next_shape_containers.forEach((shape_container, index) => {
+                render_shape(shape_container, index);
+            });
             render_shape(hold_shape_container, -1);
         };
 

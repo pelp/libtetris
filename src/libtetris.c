@@ -1,5 +1,6 @@
 #include "libtetris.h"
 #include <stdlib.h>
+#include <memory.h>
 #include <time.h>
 
 int step(tetris_t *game);
@@ -11,7 +12,7 @@ int right(tetris_t *game);
 void ghost(tetris_t *game);
 void place_piece(tetris_t *game);
 void generate_bag(bag_t *bag);
-piece_t *peek_piece(bag_t *bag);
+void init_bag(bag_t *bag);
 piece_t *grab_piece(bag_t *bag);
 int tile_coord_rotate(tetris_t *game, int x, int y);
 int touching(tetris_t *game, int dx, int dy);
@@ -20,6 +21,15 @@ void increment_hold(tetris_t * game, tetris_params_t params);
 tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params);
 void reset_piece_position(tetris_t *game);
 
+void init_bag(bag_t *bag)
+{
+    generate_bag(bag);
+    for(int i = 0; i < NUM_NEXT_PIECES; ++i)
+    {
+        bag->next[i] = bag->order[i];
+        ++bag->current;
+    }
+}
 void generate_bag(bag_t *bag)
 {
     bag->current = 0;
@@ -40,9 +50,21 @@ piece_t *peek_piece(bag_t *bag)
 
 piece_t *grab_piece(bag_t *bag)
 {
-    piece_t *piece = peek_piece(bag);
-    bag->current += 1;
-    if(bag->current >= NUM_PIECES) generate_bag(bag);
+    // Take first piece in queue
+    piece_t *piece = pieces[bag->next[0]];
+
+    // Move the rest of the pieces one step
+    for(int i = 0; i < NUM_NEXT_PIECES-1; ++i)
+    {
+        bag->next[i] = bag->next[i+1];
+    }
+
+    // Take a piece from the bag and put it at the end of the queue
+    bag->next[NUM_NEXT_PIECES-1] = bag->order[bag->current];
+
+    // Update the bag
+    if(++bag->current >= NUM_PIECES) generate_bag(bag);
+
     return piece;
 }
 
@@ -169,7 +191,6 @@ int hold(tetris_t *game){
 void place_piece(tetris_t *game)
 {
     game->current = grab_piece(&game->bag);
-    game->next = peek_piece(&game->bag);
     reset_piece_position(game);
 }
 void reset_piece_position(tetris_t *game)
@@ -195,24 +216,23 @@ void init(
 
     game->width = width;
     game->height = height;
+
+    size_t tiles_bytes = sizeof(char) * width * height;
     if (game->tiles == NULL)
     {
-        game->tiles = malloc(sizeof(char) * width * height);
+        game->tiles = malloc(tiles_bytes);
     }
     else
     {
-        game->tiles = realloc(game->tiles, sizeof(char) * width * height);
+        game->tiles = realloc(game->tiles, tiles_bytes);
     }
-    for (int i = 0; i < game->width * game->height; i++)
-    {
-        game->tiles[i] = 0;
-    }
+    memset(game->tiles, 0, tiles_bytes);
+
     game->rotated.width = 0;
     game->rotated.height = 0;
 
-    generate_bag(&game->bag);
+    init_bag(&game->bag);
     game->current = grab_piece(&game->bag);
-    game->next = peek_piece(&game->bag);
     game->hold = NULL;
     game->can_hold = true;
 
