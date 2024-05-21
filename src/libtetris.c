@@ -243,8 +243,7 @@ void init(
     {
         ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
     }
-    game->fall_interval = fall_interval;
-    game->fall_time = 0;
+    game->fall_time = game->fall_interval = fall_interval;
     game->delayed_auto_shift = delayed_auto_shift;
     game->automatic_repeat_rate = automatic_repeat_rate;
     set_rotation(game, 0);

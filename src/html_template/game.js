@@ -137,11 +137,11 @@ Module.onRuntimeInitialized = () => {
 
         let prev;
         const tick = (timeStamp) => {
+            const diff = timeStamp - prev
+            prev = timeStamp
+
             if (playing) {
-                // TODO: Get more accurate clock
-                // TODO: Handle game restart properly
-                const diff = timeStamp - prev
-                prev = timeStamp
+                console.log(keys.space);
                 const rc = handle(Module._js_tick(
                     keys.space,
                     keys.down,
@@ -199,35 +199,35 @@ Module.onRuntimeInitialized = () => {
 
     generate_html();
 
-    const handle_key = (event, state) => {
-        if (!playing) return; // Guard against not playing
+    const handle_key = (event, down) => {
+        if (down && !playing) return; // Guard against not playing
         switch (event.code) {
             case "Space":
-                keys.space = state;
+                keys.space = down;
                 break;
             case "ArrowLeft":
-                keys.left = state;
+                keys.left = down;
                 break;
             case "ControlLeft":
-                keys.rotate_ccw = state;
+                keys.rotate_ccw = down;
                 break;
             case "ShiftLeft":
-                keys.hold = state;
+                keys.hold = down;
                 break;
             case "ArrowUp":
-                keys.rotate_cw = state;
+                keys.rotate_cw = down;
                 break;
             case "ArrowRight":
-                keys.right = state;
+                keys.right = down;
                 break;
             case "ArrowDown":
-                keys.down = state;
+                keys.down = down;
                 break;
             default:
                 console.log(event.code);
                 break;
         }
     }
-    document.onkeydown = event => handle_key(event, true)
-    document.onkeyup = event => handle_key(event, false)
+    document.onkeydown = event => handle_key(event, true);
+    document.onkeyup = event => handle_key(event, false);
 };
