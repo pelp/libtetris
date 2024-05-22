@@ -402,6 +402,7 @@ int tick(tetris_t *game, tetris_params_t params)
     // Input hold management
     int rc = -1;
     tetris_input_state_t state = get_keys(game, params);
+    int pre_tick_lines = game->lines;
 
     // Input logic
     if (state.hold.down || state.edge.down)
@@ -446,5 +447,6 @@ int tick(tetris_t *game, tetris_params_t params)
         game->fall_time += game->fall_interval;
         rc = step(game);
     }
+    if (game->lines > pre_tick_lines+3) rc = 3;
     return rc;
 }
