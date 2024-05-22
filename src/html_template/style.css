@@ -12,12 +12,12 @@ body {
     --info-font: 'Calculator', sans-serif;
     --cover-color: #999;
     --uncover-color: #CCC;
-    --background-color: url("https://images.launchbox-app.com/63d126ab-6ccf-4517-b929-a9d985632d9c.jpg");
+    --background-color: url("background.jpg");
     margin: 0;
     padding: 0;
     background: var(--background-color);
     background-size: cover;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -141,7 +141,6 @@ Module.onRuntimeInitialized = () => {
             prev = timeStamp
 
             if (playing) {
-                console.log(keys.space);
                 const rc = handle(Module._js_tick(
                     keys.space,
                     keys.down,
