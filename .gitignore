@@ -1,6 +1,5 @@
 build/
 output/
-leaderboard.db
 *.swp
 *.DS_Store
 ._*
