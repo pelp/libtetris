@@ -64,3 +64,10 @@ endif
 
 start:
 	source $(BUILD_DIR)/.venv/bin/activate && python3 src/db.py
+
+update:
+	git pull
+
+install: update wasm
+	cp output/www/* /var/www/tetris/
+
