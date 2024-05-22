@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <stdio.h>
+
+
 
 int step(tetris_t *game);
 int rotate(tetris_t *game, char amount);
@@ -94,16 +97,20 @@ int touching(tetris_t *game, int dx, int dy)
         for (int j = 0; j < game->rotated.width; j++)
         {
             int piece_coord = tile_coord_rotate(game, j, i);
+            if (piece_coord < 0 || piece_coord >= game->current->height * game->current->width) continue;
             if (game->current->tiles[piece_coord] == 0) continue;
             int game_coord = (i + oy) * game->width + // y
                              j + ox; // x
-            if ((i + oy >= game->height) ||
-                (j + ox >= game->width) ||
-                (j + ox < 0) ||
-                (game->tiles[game_coord] > 0))
-            {
-                return 0;
-            }
+
+            const bool inside_width = (j + ox >= 0 && j + ox < game->width);
+            const bool in_air = (i + oy < game->height);
+            const bool above_map = (i + oy < 0);
+
+            // Check boundries
+            if (!inside_width) return 0;
+            if (!in_air) return 0;
+            if (above_map) continue;
+            if (game->tiles[game_coord] > 0) return 0;
         }
     }
     return 1;
@@ -202,53 +209,6 @@ void reset_piece_position(tetris_t *game)
 }
 
 
-void init(
-    tetris_t *game,
-    int width,
-    int height,
-    time_us_t fall_interval,
-    time_us_t delayed_auto_shift,
-    time_us_t automatic_repeat_rate
-)
-{
-    // Seed random generator with time
-    srand((unsigned) time(NULL));
-
-    game->width = width;
-    game->height = height;
-
-    size_t tiles_bytes = sizeof(char) * width * height;
-    if (game->tiles == NULL)
-    {
-        game->tiles = malloc(tiles_bytes);
-    }
-    else
-    {
-        game->tiles = realloc(game->tiles, tiles_bytes);
-    }
-    memset(game->tiles, 0, tiles_bytes);
-
-    game->rotated.width = 0;
-    game->rotated.height = 0;
-
-    init_bag(&game->bag);
-    game->current = grab_piece(&game->bag);
-    game->hold = NULL;
-    game->can_hold = true;
-
-    game->x = game->width / 2;
-    game->y = 0;
-    game->lines = 0;
-    for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
-    {
-        ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
-    }
-    game->fall_time = game->fall_interval = fall_interval;
-    game->delayed_auto_shift = delayed_auto_shift;
-    game->automatic_repeat_rate = automatic_repeat_rate;
-    set_rotation(game, 0);
-    ghost(game);
-}
 
 int solidify(tetris_t *game)
 {
@@ -325,38 +285,6 @@ int step(tetris_t *game)
     return 0;
 }
 
-char read_game(tetris_t *game, int x, int y)
-{
-    int piece_coord_y = y - game->y - game->oy;
-    int ghost_coord_y = y - game->ghosty - game->oy;
-    int piece_coord_x = x - game->x - game->ox;
-    int piece_coord = tile_coord_rotate(game, piece_coord_x, piece_coord_y);
-    int ghost_coord = tile_coord_rotate(game, piece_coord_x, ghost_coord_y);
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
-        game->current->tiles[piece_coord] > 0)
-    {
-        return game->current->tiles[piece_coord];
-    }
-
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        ghost_coord_y >= 0 && ghost_coord_y < game->rotated.height &&
-        game->current->tiles[ghost_coord] > 0)
-    {
-        return game->current->tiles[ghost_coord] > 0 ? 10 : 0;
-    }
-
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
-        game->current->tiles[piece_coord] > 0)
-    {
-        return game->current->tiles[piece_coord];
-    }
-    else
-    {
-        return game->tiles[y * game->width + x];
-    }
-}
 
 void increment_hold(tetris_t * game, tetris_params_t params)
 {
@@ -397,7 +325,67 @@ tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
     };
 }
 
-int tick(tetris_t *game, tetris_params_t params)
+
+// Public API
+TETRIS_API tetris_t *create_game(){
+    tetris_t* data = (tetris_t*)malloc(sizeof(tetris_t));
+    memset(data, 0, sizeof(tetris_t));
+    return data;
+}
+
+TETRIS_API void destroy_game(tetris_t* game){
+    free(game);
+}
+
+TETRIS_API void init(
+    tetris_t *game,
+    int width,
+    int height,
+    time_us_t fall_interval,
+    time_us_t delayed_auto_shift,
+    time_us_t automatic_repeat_rate
+)
+{
+    // Seed random generator with time
+    srand((unsigned) time(NULL));
+
+    game->width = width;
+    game->height = height;
+
+    size_t tiles_bytes = sizeof(char) * width * height;
+    if (game->tiles == NULL)
+    {
+        game->tiles = malloc(tiles_bytes);
+    }
+    else
+    {
+        game->tiles = realloc(game->tiles, tiles_bytes);
+    }
+    memset(game->tiles, 0, tiles_bytes);
+
+    game->rotated.width = 0;
+    game->rotated.height = 0;
+
+    init_bag(&game->bag);
+    game->current = grab_piece(&game->bag);
+    game->hold = NULL;
+    game->can_hold = true;
+
+    game->x = game->width / 2;
+    game->y = 0;
+    game->lines = 0;
+    for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
+    {
+        ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
+    }
+    game->fall_time = game->fall_interval = fall_interval;
+    game->delayed_auto_shift = delayed_auto_shift;
+    game->automatic_repeat_rate = automatic_repeat_rate;
+    set_rotation(game, 0);
+    ghost(game);
+}
+
+TETRIS_API int tick(tetris_t *game, tetris_params_t params)
 {
     // Input hold management
     int rc = -1;
@@ -449,4 +437,37 @@ int tick(tetris_t *game, tetris_params_t params)
     }
     if (game->lines > pre_tick_lines+3) rc = 3;
     return rc;
+}
+
+TETRIS_API char read_game(tetris_t *game, int x, int y)
+{
+    int piece_coord_y = y - game->y - game->oy;
+    int ghost_coord_y = y - game->ghosty - game->oy;
+    int piece_coord_x = x - game->x - game->ox;
+    int piece_coord = tile_coord_rotate(game, piece_coord_x, piece_coord_y);
+    int ghost_coord = tile_coord_rotate(game, piece_coord_x, ghost_coord_y);
+    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
+        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
+        game->current->tiles[piece_coord] > 0)
+    {
+        return game->current->tiles[piece_coord];
+    }
+
+    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
+        ghost_coord_y >= 0 && ghost_coord_y < game->rotated.height &&
+        game->current->tiles[ghost_coord] > 0)
+    {
+        return game->current->tiles[ghost_coord] > 0 ? 10 : 0;
+    }
+
+    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
+        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
+        game->current->tiles[piece_coord] > 0)
+    {
+        return game->current->tiles[piece_coord];
+    }
+    else
+    {
+        return game->tiles[y * game->width + x];
+    }
 }
