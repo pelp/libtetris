@@ -61,16 +61,6 @@ TETRIS_API transaction_list_t read_transactions(tetris_t *game)
 }
 #endif
 
-// TODO: Remove
-// void print_inputs(tetris_inputs_t inputs)
-// {
-//     printf("RCW: %d, RCCW: %d, HOLD: %d, DOWN: %u, LEFT: %u, RIGHT: %u, SPACE: %u\n", inputs.rotate_cw, inputs.rotate_ccw, inputs.hold, inputs.down, inputs.left, inputs.right, inputs.space);
-//     for (unsigned long i = 0; i < sizeof(tetris_inputs_t); i++)
-//     {
-//         printf("%d,", ((int8_t*)&inputs)[i]);
-//     }
-// }
-
 TETRIS_API void run_transactions(tetris_t *game, tetris_transaction_t *list, int length)
 {
     for (int i = 0; i < length; i++) tick(game, list[i].params);
