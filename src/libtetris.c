@@ -4,8 +4,6 @@
 #include <time.h>
 #include <stdio.h>
 
-
-
 int step(tetris_t *game);
 int rotate(tetris_t *game, char amount);
 int rotate_cw(tetris_t *game);
@@ -20,9 +18,63 @@ piece_t *grab_piece(bag_t *bag);
 int tile_coord_rotate(tetris_t *game, int x, int y);
 int touching(tetris_t *game, int dx, int dy);
 int set_rotation(tetris_t *game, int rotation);
-void increment_hold(tetris_t * game, tetris_params_t params);
+bool increment_hold(tetris_hold_time_t * hold, tetris_inputs_t inputs, time_us_t delta_time);
 tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params);
 void reset_piece_position(tetris_t *game);
+
+#ifdef RECORD_TRANSACTIONS
+
+void set_transaction_heap_size(transaction_list_t *list, uint64_t heap_size)
+{
+    list->heap_size = heap_size;
+    if (list->transactions == NULL)
+    {
+        list->transactions = malloc(list->heap_size * sizeof(tetris_transaction_t));
+    }
+    else
+    {
+        list->transactions = realloc(list->transactions, list->heap_size * sizeof(tetris_transaction_t));
+    }
+}
+
+void init_transaction_list(transaction_list_t *list)
+{
+    list->used_size = 0;
+    set_transaction_heap_size(list, TRANSACTION_LIST_INIT_SIZE);
+}
+
+void add_transaction(transaction_list_t *list, tetris_params_t params)
+{
+    if (list->used_size == list->heap_size)
+    {
+        // Increase heap size when needed
+        set_transaction_heap_size(list, list->heap_size * 2);
+    }
+    list->transactions[list->used_size++] = (tetris_transaction_t){
+        .params = params
+    };
+}
+
+TETRIS_API transaction_list_t read_transactions(tetris_t *game)
+{
+    return game->transaction_list;
+}
+#endif
+
+// TODO: Remove
+// void print_inputs(tetris_inputs_t inputs)
+// {
+//     printf("RCW: %d, RCCW: %d, HOLD: %d, DOWN: %u, LEFT: %u, RIGHT: %u, SPACE: %u\n", inputs.rotate_cw, inputs.rotate_ccw, inputs.hold, inputs.down, inputs.left, inputs.right, inputs.space);
+//     for (unsigned long i = 0; i < sizeof(tetris_inputs_t); i++)
+//     {
+//         printf("%d,", ((int8_t*)&inputs)[i]);
+//     }
+// }
+
+TETRIS_API void run_transactions(tetris_t *game, tetris_transaction_t *list, int length)
+{
+    for (int i = 0; i < length; i++) tick(game, list[i].params);
+}
 
 void init_bag(bag_t *bag)
 {
@@ -39,7 +91,7 @@ void generate_bag(bag_t *bag)
     for (int i = 0; i < NUM_PIECES; ++i) bag->order[i] = i;
     for (int i = NUM_PIECES - 1; i > 0; --i)
     {
-        int j = rand() % (i+1);
+        int j = lrand48() % (i+1);
         int temp = bag->order[i];
         bag->order[i] = bag->order[j];
         bag->order[j] = temp;
@@ -286,42 +338,47 @@ int step(tetris_t *game)
 }
 
 
-void increment_hold(tetris_t * game, tetris_params_t params)
+bool increment_hold(tetris_hold_time_t * hold, tetris_inputs_t inputs, time_us_t delta_time)
 {
+    bool update = false;
     for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
-        if (((bool*)&params.inputs)[i * sizeof(bool)])
+        if (((bool*)&inputs)[i])
         {
-            ((time_us_t*)&game->input_time)[i * sizeof(bool)] += params.delta_time;
+            ((time_us_t*)hold)[i] += delta_time;
         }
         else
         {
-            ((time_us_t*)&game->input_time)[i * sizeof(bool)] = 0;
+            if (((time_us_t*)hold)[i] == 0) continue;
+            ((time_us_t*)hold)[i] = 0;
         }
+        update = true;
     }
+    return update;
 }
 
 tetris_input_state_t get_keys(tetris_t * game, tetris_params_t params)
 {
-    tetris_hold_time_t old_hold = game->input_time;
-    increment_hold(game, params);
+    bool update = increment_hold(&game->input_time, game->input_state, params.delta_time);
+    game->input_state = params.inputs;
     tetris_inputs_t edge;
     tetris_inputs_t hold;
     for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++)
     {
-        const int t = ((time_us_t*)&game->input_time)[i * sizeof(bool)];
-        const int old_t = ((time_us_t*)&old_hold)[i * sizeof(bool)];
-        ((bool*)&hold)[i * sizeof(bool)] = (
+        const int t = ((time_us_t*)&game->input_time)[i];
+        const bool input = ((bool*)&game->input_state)[i];
+        ((bool*)&hold)[i] = (
             t > game->delayed_auto_shift
         );
-        ((bool*)&edge)[i * sizeof(bool)] = (
-            t > 0 && old_t == 0
+        ((bool*)&edge)[i] = (
+            t == 0 && input
         );
-        if (t > game->delayed_auto_shift) ((time_us_t*)&game->input_time)[i * sizeof(bool)] -= game->automatic_repeat_rate;
+        if (t > game->delayed_auto_shift) ((time_us_t*)&game->input_time)[i] -= game->automatic_repeat_rate;
     }
     return (tetris_input_state_t){
         .hold = hold,
-        .edge = edge
+        .edge = edge,
+        .update = update
     };
 }
 
@@ -347,7 +404,8 @@ TETRIS_API void init(
 )
 {
     // Seed random generator with time
-    srand((unsigned) time(NULL));
+    if (game->seed == 0) game->seed = (seed_t) time(NULL);
+    srand48(game->seed);
 
     game->width = width;
     game->height = height;
@@ -381,6 +439,11 @@ TETRIS_API void init(
     game->fall_time = game->fall_interval = fall_interval;
     game->delayed_auto_shift = delayed_auto_shift;
     game->automatic_repeat_rate = automatic_repeat_rate;
+#ifdef RECORD_TRANSACTIONS
+    game->last_change = 0;
+    init_transaction_list(&game->transaction_list);
+#endif
+    memset(&game->input_state, 0, sizeof(tetris_inputs_t));
     set_rotation(game, 0);
     ghost(game);
 }
@@ -436,6 +499,25 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params)
         rc = step(game);
     }
     if (game->lines > pre_tick_lines+3) rc = 3;
+
+#ifdef RECORD_TRANSACTIONS
+    game->last_change += params.delta_time;
+#endif
+    if (rc == -1 && state.update) rc = 4;
+    if (rc != -1) {
+#ifdef RECORD_TRANSACTIONS
+        // Save transaction of the tick if something happened
+        add_transaction(&game->transaction_list, (tetris_params_t){
+            .inputs = params.inputs,
+            .delta_time = game->last_change
+        });
+        game->last_change = 0;
+#endif
+        // Set new fall intervall
+        game->fall_interval -= 10000 * (game->lines - pre_tick_lines);
+    }
+
+
     return rc;
 }
 
@@ -470,4 +552,19 @@ TETRIS_API char read_game(tetris_t *game, int x, int y)
     {
         return game->tiles[y * game->width + x];
     }
+}
+
+TETRIS_API int get_lines(tetris_t *game)
+{
+    return game->lines;
+}
+
+TETRIS_API int get_fall_time(tetris_t *game)
+{
+    return game->fall_time;
+}
+
+TETRIS_API void set_seed(tetris_t *game, seed_t seed)
+{
+    game->seed = seed;
 }
