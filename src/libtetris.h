@@ -2,6 +2,7 @@
 #define LIBTETRIS_LIBTETRIS_H
 
 #include "bag.h"
+#include "framebuffer.h"
 
 #ifdef _WIN32
 #define TETRIS_API __declspec(dllexport)
@@ -44,14 +45,13 @@ typedef struct {
 } tetris_params_t;
 
 typedef struct {
-    int width, height; // Board size
-    PIECE_ID *tiles;       // Board data
+    framebuffer_t framebuffer;
 
     coord_t x, y;      // Current x and y position
     coord_t ghosty;    // Y-coordinate used to compare with y-coordinate above to check if piece hit bottom
     rotation_t rotation; // Rotation of current piece
-    PIECE_ID current; // Current piece on the board
-    PIECE_ID hold;    // Held piece
+    piece_id_t current; // Current piece on the board
+    piece_id_t hold;    // Held piece
     bool can_hold;    // True if the user can hold the current piece
     bag_t bag;        // Bag used for generating the sequence of pieces
 
@@ -80,6 +80,6 @@ TETRIS_API void init(tetris_t *game,
 
 TETRIS_API int tick(tetris_t *game, tetris_params_t params);
 
-TETRIS_API char read_game(tetris_t *game, int x, int y);
+TETRIS_API char read_game(tetris_t *game, coord_t x, coord_t y);
 
 #endif

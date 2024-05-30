@@ -6,7 +6,7 @@
 
 int step(tetris_t *game);
 
-int rotate(tetris_t *game, rotation_t amount);
+int rotate(tetris_t *game, const rotation_t amount);
 
 int rotate_cw(tetris_t *game);
 
@@ -18,9 +18,9 @@ int right(tetris_t *game);
 
 void ghost(tetris_t *game);
 
-void place_piece(tetris_t *game);
+void grab_next_piece(tetris_t *game);
 
-bool is_touching(tetris_t *game, coord_t dx, coord_t dy, rotation_t rotation);
+bool is_touching(tetris_t *game, const coord_t dx, const coord_t dy, const rotation_t rotation);
 
 void increment_hold(tetris_t *game, tetris_params_t params);
 
@@ -28,7 +28,7 @@ tetris_input_state_t get_keys(tetris_t *game, tetris_params_t params);
 
 void reset_piece_position(tetris_t *game);
 
-bool is_touching(tetris_t *game, coord_t dx, coord_t dy, rotation_t rotation) {
+bool is_touching(tetris_t *game, const coord_t dx, const coord_t dy, const rotation_t rotation) {
     const coord_t x = game->x + dx;
     const coord_t y = game->y + dy;
 
@@ -36,13 +36,13 @@ bool is_touching(tetris_t *game, coord_t dx, coord_t dy, rotation_t rotation) {
         const coord_t block_x = x + PIECE_DATA_X[game->current][rotation][i];
         const coord_t block_y = y + PIECE_DATA_Y[game->current][rotation][i];
 
-        if (block_x < 0 || block_x >= game->width) return true;
-        if (block_x >= game->height) return true;
+        if (block_x < 0 || block_x >= game->framebuffer.width) return true;
+        if (block_y >= game->framebuffer.height) return true;
         if (block_y < 0) continue;
 
-        const coord_t block_index = block_y * game->width + block_x;
+        const coord_t block_index = block_y * game->framebuffer.width + block_x;
 
-        if (game->tiles[block_index] != PIECE_EMPTY) return true;
+        if (game->framebuffer.blocks[block_index] != PIECE_EMPTY) return true;
     }
     return false;
 }
@@ -65,19 +65,18 @@ int right(tetris_t *game) {
     return 1;
 }
 
-int rotate(tetris_t *game, rotation_t amount) {
-    rotation_t new_rotation = (game->rotation + amount) % 4;
+int rotate(tetris_t *game, const rotation_t amount) {
+    const rotation_t new_rotation = (game->rotation + amount) % 4;
     if (!is_touching(game, 0, 0, new_rotation)) {
         game->rotation = new_rotation;
         ghost(game);
         return 0;
     } else {
-        kick_table_t *kick_table = game->current == PIECE_I ? &WALLKICK_I_CCW : &WALLKICK_NORMAL_CCW;
-        kick_table_row_t *kick_table_row = &(*kick_table[game->rotation]);
+        const kick_table_t *const kick_table = game->current == PIECE_I ? &WALLKICK_I_CCW : &WALLKICK_NORMAL_CCW;
 
-        for (int i = 0; i < 4; ++i) {
-            const coord_t dx = (*kick_table_row)[i][0];
-            const coord_t dy = (*kick_table_row)[i][1];
+        for (int i = 0; i < KICK_COUNT; ++i) {
+            const coord_t dx = (*kick_table)[game->rotation][i][0];
+            const coord_t dy = (*kick_table)[game->rotation][i][1];
             if (!is_touching(game, dx, dy, new_rotation)) {
                 game->rotation = new_rotation;
                 game->x += dx;
@@ -101,25 +100,25 @@ int rotate_ccw(tetris_t *game) {
 int hold(tetris_t *game) {
     if (!game->can_hold) return 0;
     game->can_hold = false;
-    if (game->hold) {
-        PIECE_ID held_piece = game->hold;
+    if (game->hold != PIECE_EMPTY) {
+        const piece_id_t held_piece = game->hold;
         game->hold = game->current;
         game->current = held_piece;
         reset_piece_position(game);
     } else {
         game->hold = game->current;
-        place_piece(game);
+        grab_next_piece(game);
     }
     return 1;
 }
 
-void place_piece(tetris_t *game) {
+void grab_next_piece(tetris_t *game) {
     game->current = grab_piece(&game->bag);
     reset_piece_position(game);
 }
 
 void reset_piece_position(tetris_t *game) {
-    game->y = 0;
+    game->y = -2;
     game->x = 3;
     game->rotation = 0;
     ghost(game);
@@ -130,11 +129,11 @@ int solidify(tetris_t *game) {
         const coord_t block_x = game->x + PIECE_DATA_X[game->current][game->rotation][i];
         const coord_t block_y = game->y + PIECE_DATA_Y[game->current][game->rotation][i];
 
-        const coord_t block_index = block_y * game->width + block_x;
+        const coord_t block_index = block_y * game->framebuffer.width + block_x;
 
         if (block_index < 0) return 1;
 
-        game->tiles[block_index] = game->current;
+        game->framebuffer.blocks[block_index] = game->current;
     }
     return 0;
 }
@@ -155,31 +154,31 @@ int step(tetris_t *game) {
             return 1;
         }
         // Check rows
-        for (int i = 0; i < game->height; i++) {
+        for (int i = 0; i < game->framebuffer.height; ++i) {
             int count = 0;
-            for (int j = 0; j < game->width; j++) {
-                if (game->tiles[i * game->width + j] == 0) break;
-                count++;
+            for (int j = 0; j < game->framebuffer.width; ++j) {
+                if (game->framebuffer.blocks[i * game->framebuffer.width + j] == PIECE_EMPTY) break;
+                ++count;
             }
-            if (count == game->width) {
+            if (count == game->framebuffer.width) {
                 game->lines++;
                 // Move everything down
                 for (int k = i; k > 0; k--) {
-                    for (int j = 0; j < game->width; j++) {
-                        game->tiles[k * game->width + j] = game->tiles[(k - 1) * game->width + j];
+                    for (int j = 0; j < game->framebuffer.width; j++) {
+                        game->framebuffer.blocks[k * game->framebuffer.width + j] =
+                                game->framebuffer.blocks[(k - 1) * game->framebuffer.width + j];
                     }
                 }
-
             }
         }
         // Next piece
-        place_piece(game);
+        grab_next_piece(game);
         game->can_hold = true;
         return 2;
     }
 
     // Nothing happens
-    game->y++;
+    ++game->y;
     return 0;
 }
 
@@ -240,36 +239,23 @@ TETRIS_API void init(
     // Seed random generator with time
     srand((unsigned) time(NULL));
 
-    game->width = width;
-    game->height = height;
-
-    size_t tiles_bytes = sizeof(PIECE_ID) * width * height;
-    if (game->tiles == NULL) {
-        game->tiles = malloc(tiles_bytes);
-    } else {
-        game->tiles = realloc(game->tiles, tiles_bytes);
-    }
-    memset(game->tiles, PIECE_EMPTY, tiles_bytes);
-
-    game->rotated.width = 0;
-    game->rotated.height = 0;
+    init_framebuffer(&game->framebuffer, width, height);
 
     init_bag(&game->bag);
     game->current = grab_piece(&game->bag);
-    game->hold = NULL;
+    game->hold = PIECE_EMPTY;
     game->can_hold = true;
 
-    game->x = game->width / 2;
-    game->y = 0;
     game->lines = 0;
     for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++) {
         ((time_us_t *) &game->input_time)[i * sizeof(bool)] = 0;
     }
-    game->fall_time = game->fall_interval = fall_interval;
+    game->fall_time = 0;
+    game->fall_interval = fall_interval;
     game->delayed_auto_shift = delayed_auto_shift;
     game->automatic_repeat_rate = automatic_repeat_rate;
-    set_rotation(game, 0);
-    ghost(game);
+
+    reset_piece_position(game);
 }
 
 TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
@@ -317,29 +303,22 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     return rc;
 }
 
-TETRIS_API char read_game(tetris_t *game, int x, int y) {
-    int piece_coord_y = y - game->y - game->oy;
-    int ghost_coord_y = y - game->ghosty - game->oy;
-    int piece_coord_x = x - game->x - game->ox;
-    int piece_coord = tile_coord_rotate(game, piece_coord_x, piece_coord_y);
-    int ghost_coord = tile_coord_rotate(game, piece_coord_x, ghost_coord_y);
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
-        game->current->tiles[piece_coord] > 0) {
-        return game->current->tiles[piece_coord];
+TETRIS_API char read_game(tetris_t *game, coord_t x, coord_t y) {
+    for (int i = 0; i < BLOCK_COUNT; ++i) {
+        const coord_t block_x = game->x + PIECE_DATA_X[game->current][game->rotation][i];
+        const coord_t block_y = game->y + PIECE_DATA_Y[game->current][game->rotation][i];
+        if (block_x == x && block_y == y) {
+            return game->current;
+        }
     }
 
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        ghost_coord_y >= 0 && ghost_coord_y < game->rotated.height &&
-        game->current->tiles[ghost_coord] > 0) {
-        return game->current->tiles[ghost_coord] > 0 ? 10 : 0;
+    for (int i = 0; i < BLOCK_COUNT; ++i) {
+        const coord_t block_x = game->x + PIECE_DATA_X[game->current][game->rotation][i];
+        const coord_t ghost_y = game->ghosty + PIECE_DATA_Y[game->current][game->rotation][i];
+        if (block_x == x && ghost_y == y) {
+            return PIECE_GHOST;
+        }
     }
 
-    if (piece_coord_x >= 0 && piece_coord_x < game->rotated.width &&
-        piece_coord_y >= 0 && piece_coord_y < game->rotated.height &&
-        game->current->tiles[piece_coord] > 0) {
-        return game->current->tiles[piece_coord];
-    } else {
-        return game->tiles[y * game->width + x];
-    }
+    return game->framebuffer.blocks[y * game->framebuffer.width + x];
 }

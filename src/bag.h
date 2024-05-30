@@ -3,7 +3,7 @@
 
 #include "piece.h"
 
-#define NUM_NEXT_PIECES 5
+#define NUM_NEXT_PIECES 6
 
 typedef struct {
     piece_id_t current;

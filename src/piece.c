@@ -1,29 +1,13 @@
 #include "piece.h"
 
-int get_piece_width(piece_id_t id) {
-    int min_x = 0, max_x = 0;
-    for (int i = 0; i < 4; ++i) {
-        int x = PIECE_DATA_X[id][0][i];
-        min_x = min_x < x ? min_x : x;
-        max_x = max_x > x ? max_x : x;
-    }
-    return max_x - min_x + 1;
+uint8_t get_piece_width(piece_id_t id) {
+    return PIECE_FRAMEBUFFER[id].width;
 }
 
-int get_piece_height(piece_id_t id) {
-    int min_y = 0, max_y = 0;
-    for (int i = 0; i < 4; ++i) {
-        int y = PIECE_DATA_Y[id][0][i];
-        min_y = min_y < y ? min_y : y;
-        max_y = max_y > y ? max_y : y;
-    }
-    return max_y - min_y + 1;
+uint8_t get_piece_height(piece_id_t id) {
+    return PIECE_FRAMEBUFFER[id].height;
 }
 
-coord_t *get_piece_x_coords(piece_id_t id) {
-    return PIECE_DATA_X[id][0];
-}
-
-coord_t *get_piece_y_coords(piece_id_t id) {
-    return PIECE_DATA_Y[id][0];
+const piece_id_t *get_piece_blocks(piece_id_t id) {
+    return PIECE_FRAMEBUFFER[id].blocks;
 }
