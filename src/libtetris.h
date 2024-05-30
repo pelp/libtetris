@@ -13,7 +13,11 @@
 #define NUM_PIECES 7
 #define NUM_NEXT_PIECES 5
 
+// This is probably the default size when looking at games played at medium pace
+#define TRANSACTION_LIST_INIT_SIZE 4096
+
 typedef int time_us_t;
+typedef unsigned int seed_t;
 
 typedef struct
 {
@@ -49,6 +53,7 @@ typedef struct
 {
     tetris_inputs_t edge;
     tetris_inputs_t hold;
+    bool update;
 } tetris_input_state_t;
 
 typedef struct
@@ -70,6 +75,18 @@ typedef struct
 
 typedef struct
 {
+    tetris_params_t params;
+} tetris_transaction_t;
+
+typedef struct
+{
+    tetris_transaction_t *transactions;
+    uint64_t heap_size;
+    uint64_t used_size;
+} transaction_list_t;
+
+typedef struct
+{
     int width, height;
     char *tiles;
     int x, y;
@@ -87,6 +104,12 @@ typedef struct
     time_us_t delayed_auto_shift;
     time_us_t automatic_repeat_rate;
     tetris_hold_time_t input_time;
+    tetris_inputs_t input_state;
+    seed_t seed;
+#ifdef RECORD_TRANSACTIONS
+    transaction_list_t transaction_list;
+    time_us_t last_change;
+#endif
 } tetris_t;
 
 static piece_t PIECE_I = {4, 4, {
@@ -130,3 +153,6 @@ TETRIS_API void init( tetris_t *game,
           time_us_t automatic_repeat_rate);
 TETRIS_API int tick(tetris_t *game, tetris_params_t params);
 TETRIS_API char read_game(tetris_t *game, int x, int y);
+TETRIS_API transaction_list_t read_transactions(tetris_t *game);
+TETRIS_API int get_lines(tetris_t *game);
+TETRIS_API void set_seed(tetris_t *game, seed_t seed);
