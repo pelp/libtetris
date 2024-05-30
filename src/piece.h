@@ -13,14 +13,15 @@ typedef enum : int8_t {
     PIECE_J = 5,
     PIECE_S = 6,
     PIECE_COUNT = 7,
-    PIECE_GHOST = 10
-} PIECE_ID;
+    PIECE_GHOST = 8
+} piece_id_t;
 
 #define ROTATION_COUNT 4
 #define BLOCK_COUNT 4
+#define KICK_COUNT 4
 
 typedef coord_t piece_data_t[PIECE_COUNT][ROTATION_COUNT][BLOCK_COUNT];
-typedef coord_t kick_table_row_t[4][2];
+typedef coord_t kick_table_row_t[KICK_COUNT][2];
 typedef kick_table_row_t kick_table_t[ROTATION_COUNT];
 
 static piece_data_t PIECE_DATA_X = {
@@ -68,12 +69,22 @@ static kick_table_t WALLKICK_I_CW = {
         {{1,  0}, {-2, 0}, {1,  2},  {-2, -1}},    // 3>>0
 };
 
-int get_piece_width(PIECE_ID id);
+static char *PIECE_FRAMEBUFFER[PIECE_COUNT] = {
+        "0000",    // I
+        "--1\n111", // L
+        "22\n22",   // O
+        "33-\n-33", // Z
+        "-4-\n444", // T
+        "5--\n555", // J
+        "-66\n66-", // S
+};
 
-int get_piece_height(PIECE_ID id);
+int get_piece_width(piece_id_t id);
 
-coord_t *get_piece_x_coords(PIECE_ID id);
+int get_piece_height(piece_id_t id);
 
-coord_t *get_piece_y_coords(PIECE_ID id);
+coord_t *get_piece_x_coords(piece_id_t id);
+
+coord_t *get_piece_y_coords(piece_id_t id);
 
 #endif

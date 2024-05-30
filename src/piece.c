@@ -1,6 +1,6 @@
 #include "piece.h"
 
-int get_piece_width(PIECE_ID id) {
+int get_piece_width(piece_id_t id) {
     int min_x = 0, max_x = 0;
     for (int i = 0; i < 4; ++i) {
         int x = PIECE_DATA_X[id][0][i];
@@ -10,7 +10,7 @@ int get_piece_width(PIECE_ID id) {
     return max_x - min_x + 1;
 }
 
-int get_piece_height(PIECE_ID id) {
+int get_piece_height(piece_id_t id) {
     int min_y = 0, max_y = 0;
     for (int i = 0; i < 4; ++i) {
         int y = PIECE_DATA_Y[id][0][i];
@@ -20,10 +20,10 @@ int get_piece_height(PIECE_ID id) {
     return max_y - min_y + 1;
 }
 
-coord_t *get_piece_x_coords(PIECE_ID id) {
+coord_t *get_piece_x_coords(piece_id_t id) {
     return PIECE_DATA_X[id][0];
 }
 
-coord_t *get_piece_y_coords(PIECE_ID id) {
+coord_t *get_piece_y_coords(piece_id_t id) {
     return PIECE_DATA_Y[id][0];
 }
