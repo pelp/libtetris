@@ -4,7 +4,7 @@
 #include <time.h>
 #include <stdio.h>
 
-int step(tetris_t *game);
+int tetris_step(tetris_t *game);
 int rotate(tetris_t *game, char amount);
 int rotate_cw(tetris_t *game);
 int rotate_ccw(tetris_t *game);
@@ -282,7 +282,7 @@ void ghost(tetris_t *game)
     game->y = oldy;
 }
 
-int step(tetris_t *game)
+int tetris_step(tetris_t *game)
 {
     ghost(game);
     // Check if touching pieces
@@ -448,12 +448,12 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params)
     // Input logic
     if (state.hold.down || state.edge.down)
     {
-        rc = step(game);
+        rc = tetris_step(game);
     }
     if (state.edge.space)
     {
         // Fall all the way down
-        while ((rc = step(game)) == 0);
+        while ((rc = tetris_step(game)) == 0);
     }
     if (state.hold.left || state.edge.left)
     {
@@ -486,7 +486,7 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params)
     while (game->fall_time <= 0)
     {
         game->fall_time += game->fall_interval;
-        rc = step(game);
+        rc = tetris_step(game);
     }
     if (game->lines > pre_tick_lines+3) rc = 3;
 
