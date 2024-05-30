@@ -549,11 +549,6 @@ TETRIS_API int get_lines(tetris_t *game)
     return game->lines;
 }
 
-TETRIS_API int get_fall_time(tetris_t *game)
-{
-    return game->fall_time;
-}
-
 TETRIS_API void set_seed(tetris_t *game, seed_t seed)
 {
     game->seed = seed;

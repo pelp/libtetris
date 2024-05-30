@@ -155,5 +155,4 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params);
 TETRIS_API char read_game(tetris_t *game, int x, int y);
 TETRIS_API transaction_list_t read_transactions(tetris_t *game);
 TETRIS_API int get_lines(tetris_t *game);
-TETRIS_API int get_fall_time(tetris_t *game);
 TETRIS_API void set_seed(tetris_t *game, seed_t seed);
