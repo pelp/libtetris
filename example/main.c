@@ -14,47 +14,39 @@
 #define CYAN 6
 #define WHITE 7
 
-int lose(tetris_t *game)
-{
+int lose(tetris_t *game) {
     endwin();
     printf("YOU LOSE\n");
     printf("Score: %d\n", game->lines);
     return 1;
 }
 
-void print_state(tetris_t *game)
-{
-    for (int i = 0; i < game->height; i++)
-    {
-        for (int j = 0; j < game->width * 2; j++)
-        {
+void print_state(tetris_t *game) {
+    for (int i = 0; i < game->framebuffer.height; i++) {
+        for (int j = 0; j < game->framebuffer.width * 2; j++) {
             char state = read_game(game, j / 2, i);
-            if (state > 0)
-            {
+            if (state > 0) {
                 attron(COLOR_PAIR(state));
             }
             mvaddch(i, j + 1, ' ');
-            if (state > 0)
-            {
+            if (state > 0) {
                 attroff(COLOR_PAIR(state));
             }
             // printf("(%d, %d) -> %d, (%d, %d)\n", piece_coord_x, piece_coord_y, piece_coord, game->rotated.width, game->rotated.height);
         }
     }
-    for (int i = 0; i < game->width * 2; i++)
-    {
-        mvaddch(game->height, i + 1, (i/2 >= game->x + game->ox && i/2 < game->x + game->ox + game->rotated.width) ? '=' : ' ');
+    for (int i = 0; i < game->framebuffer.width * 2; i++) {
+        mvaddch(game->height, i + 1,
+                (i / 2 >= game->x + game->ox && i / 2 < game->x + game->ox + game->rotated.width) ? '=' : ' ');
     }
-    for (int i = 0; i < game->height; i++)
-    {
+    for (int i = 0; i < game->framebuffer.height; i++) {
         mvaddch(i, 0, '|');
-        mvaddch(i, game->width*2+1, '|');
+        mvaddch(i, game->framebuffer.width * 2 + 1, '|');
     }
     refresh();
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     setlocale(LC_ALL, "");
     initscr();
     curs_set(0);
@@ -74,11 +66,9 @@ int main(int argc, char *argv[])
     init(&game, 10, 20);
     print_state(&game);
     int counter = 0;
-    while (true)
-    {
+    while (true) {
         char c = getch();
-        switch (c)
-        {
+        switch (c) {
             case 'h':
                 left(&game);
                 break;
@@ -86,29 +76,25 @@ int main(int argc, char *argv[])
                 right(&game);
                 break;
             case 'k':
-                rotate(&game);
+                rotate_cw(&game);
                 break;
             case 'j':
-                if (step(&game) == 1)
-                {
+                if (tetris_step(&game) == 1) {
                     return lose(&game);
                 }
                 break;
             case ' ':
                 int rc;
-                while ((rc = step(&game)) == 0);
-                if (rc == 1)
-                {
+                while ((rc = tetris_step(&game)) == 0);
+                if (rc == 1) {
                     return lose(&game);
                 }
                 break;
 
         }
-        if (counter > FPS)
-        {
+        if (counter > FPS) {
             counter = 0;
-            if (step(&game) == 1)
-            {
+            if (tetris_step(&game) == 1) {
                 return lose(&game);
             }
         }

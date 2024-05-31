@@ -1,32 +1,57 @@
-CC=gcc
-CC_FLAGS=-c -Werror -Wall -Wextra -fPIC
-EMCC_FLAGS=-Wall -Werror -Wextra
-EXE_NAME=tetris
-LIB_NAME=libtetris.so
-SRC_DIR=src
-BUILD_DIR=build
-OUTPUT_DIR=output
+# Directories
+SRC_DIR := src
+EXAMPLE_DIR := example
+BUILD_DIR := build
+OUTPUT_DIR := output
+
+# Compiler and flags
+CC := gcc
+CFLAGS := -Wall -Werror -Wextra -fPIC
+LDFLAGS := -shared
+
+EXE_NAME := tetris
+LIB_NAME := libtetris.so
 
 SHELL:=/usr/bin/env bash
 
-all: link
+# Source files and object files
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
+
+
+# Default target
+all: lib example
+
+lib: $(OUTPUT_DIR)/lib/$(LIB_NAME)
+
+example: $(OUTPUT_DIR)/$(EXE_NAME)
 
 output:
 	mkdir -p $(OUTPUT_DIR)/lib
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/libtetris.o: $(SRC_DIR)/libtetris.c
-	cd $(BUILD_DIR) && $(CC) $(CC_FLAGS) ../$(SRC_DIR)/libtetris.c
+$(BUILD_DIR)/main.o: $(EXAMPLE_DIR)/main.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -I$(SRC_DIR) -c -o $@ $<
 
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.c
-	cd $(BUILD_DIR) && $(CC) $(CC_FLAGS) ../$(SRC_DIR)/main.c
-
-link: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
+example: output $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o
 	$(CC) $(BUILD_DIR)/main.o $(BUILD_DIR)/libtetris.o -lncurses -o $(OUTPUT_DIR)/$(EXE_NAME)
 
-clean:
-	rm -rf $(BUILD_DIR)
-	rm -rf $(OUTPUT_DIR)
+# Rule to build the example
+$(OUTPUT_DIR)/$(EXE_NAME): $(OBJS) $(BUILD_DIR)/main.o
+	$(CC) $^ -lncurses -o $(OUTPUT_DIR)/$(EXE_NAME)
 
-lib: output $(BUILD_DIR)/libtetris.o
-	$(CC) $(BUILD_DIR)/libtetris.o -shared -o $(OUTPUT_DIR)/lib/$(LIB_NAME)
+# Rule to build the shared library
+$(OUTPUT_DIR)/lib/$(LIB_NAME): $(OBJS)
+	@mkdir -p $(OUTPUT_DIR)/lib
+	$(CC) $(LDFLAGS) -o $@ $^
+
+# Rule to build object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -rf $(BUILD_DIR) $(OUTPUT_DIR)
+
+.PHONY: all clean
