@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
-#include <stdio.h>
 
 int step(tetris_t *game);
 
@@ -163,10 +162,12 @@ int step(tetris_t *game) {
             if (count == game->framebuffer.width) {
                 game->lines++;
                 // Move everything down
-                for (int k = i; k > 0; k--) {
+                for (int k = i; k >= 0; k--) {
                     for (int j = 0; j < game->framebuffer.width; j++) {
                         game->framebuffer.blocks[k * game->framebuffer.width + j] =
-                                game->framebuffer.blocks[(k - 1) * game->framebuffer.width + j];
+                                k == 0
+                                ? PIECE_EMPTY
+                                : game->framebuffer.blocks[(k - 1) * game->framebuffer.width + j];
                     }
                 }
             }
