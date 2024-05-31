@@ -104,7 +104,7 @@ TETRIS_API void init(tetris_t *game,
 
 TETRIS_API int tick(tetris_t *game, tetris_params_t params);
 
-TETRIS_API char read_game(tetris_t *game, coord_t x, coord_t y);
+TETRIS_API int8_t read_game(tetris_t *game, coord_t x, coord_t y);
 
 TETRIS_API transaction_list_t read_transactions(tetris_t *game);
 

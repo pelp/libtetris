@@ -14,7 +14,7 @@ void generate_bag(bag_t *bag) {
     bag->current = 0;
     for (int i = 0; i < PIECE_COUNT; ++i) bag->order[i] = i;
     for (int i = PIECE_COUNT - 1; i > 0; --i) {
-        int j = rand() % (i + 1);
+        int j = lrand48() % (i + 1);
         int temp = bag->order[i];
         bag->order[i] = bag->order[j];
         bag->order[j] = temp;

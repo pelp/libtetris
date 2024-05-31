@@ -353,7 +353,6 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
         hold(game);
     }
 
-    printf("preparing to fall\n");
     // Force fall on fall interval
     game->fall_time -= params.delta_time;
     while (game->fall_time <= 0) {
@@ -361,7 +360,6 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
         rc = tetris_step(game);
     }
     if (game->lines > pre_tick_lines + 3) rc = 3;
-    printf("fall done\n");
 
 #ifdef RECORD_TRANSACTIONS
     game->last_change += params.delta_time;
@@ -374,6 +372,7 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
             .inputs = params.inputs,
             .delta_time = game->last_change
         });
+        printf("recorded transaction: %ld\n", game->last_change);
         game->last_change = 0;
 #endif
         // Set new fall interval
@@ -383,7 +382,7 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     return rc;
 }
 
-TETRIS_API char read_game(tetris_t *game, coord_t x, coord_t y) {
+TETRIS_API int8_t read_game(tetris_t *game, coord_t x, coord_t y) {
     for (int i = 0; i < BLOCK_COUNT; ++i) {
         const coord_t block_x = game->x + PIECE_DATA_X[game->current][game->rotation][i];
         const coord_t block_y = game->y + PIECE_DATA_Y[game->current][game->rotation][i];
@@ -402,7 +401,6 @@ TETRIS_API char read_game(tetris_t *game, coord_t x, coord_t y) {
 
     return game->framebuffer.blocks[y * game->framebuffer.width + x];
 }
-
 
 TETRIS_API int get_lines(tetris_t *game) {
     return game->lines;
