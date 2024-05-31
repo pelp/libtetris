@@ -57,7 +57,7 @@ static const kick_table_t WALLKICK_I_CW = {
         {{1,  0}, {-2, 0}, {1,  2},  {-2, -1}},    // 3>>0
 };
 
-static piece_id_t PIECE_FRAMEBUFFER_DATA[PIECE_COUNT][6] = {
+static int8_t PIECE_FRAMEBUFFER_DATA[PIECE_COUNT][6] = {
         [PIECE_I] = {PIECE_I, PIECE_I, PIECE_I, PIECE_I},
         [PIECE_L] = {PIECE_EMPTY, PIECE_EMPTY, PIECE_L, PIECE_L, PIECE_L, PIECE_L},
         [PIECE_O] = {PIECE_O, PIECE_O, PIECE_O, PIECE_O},
@@ -81,6 +81,6 @@ uint8_t get_piece_width(piece_id_t id);
 
 uint8_t get_piece_height(piece_id_t id);
 
-const piece_id_t *get_piece_blocks(piece_id_t id);
+const int8_t *get_piece_blocks(piece_id_t id);
 
 #endif

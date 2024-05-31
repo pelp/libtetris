@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
+#include <stdio.h>
 
 int tetris_step(tetris_t *game);
 
@@ -66,7 +67,11 @@ TETRIS_API transaction_list_t read_transactions(tetris_t *game)
 #endif
 
 TETRIS_API void run_transactions(tetris_t *game, tetris_transaction_t *list, int length) {
-    for (int i = 0; i < length; i++) tick(game, list[i].params);
+    printf("transactions: %d\n", length);
+    for (int i = 0; i < length; i++){
+        printf("ticking: %d (%ld us)\n", i, list[i].params.delta_time);
+        tick(game, list[i].params);
+    }
 }
 
 
@@ -348,6 +353,7 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
         hold(game);
     }
 
+    printf("preparing to fall\n");
     // Force fall on fall interval
     game->fall_time -= params.delta_time;
     while (game->fall_time <= 0) {
@@ -355,6 +361,7 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
         rc = tetris_step(game);
     }
     if (game->lines > pre_tick_lines + 3) rc = 3;
+    printf("fall done\n");
 
 #ifdef RECORD_TRANSACTIONS
     game->last_change += params.delta_time;

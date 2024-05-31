@@ -7,7 +7,7 @@
 typedef int16_t coord_t;
 typedef uint8_t rotation_t;
 
-typedef enum : int8_t {
+typedef enum {
     PIECE_EMPTY = -1,
     PIECE_I = 0,
     PIECE_L = 1,
