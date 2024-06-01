@@ -325,10 +325,10 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     int pre_tick_lines = game->lines;
 
     // Input logic
-    if (state.hold.down || state.edge.down) {
+    if (state.hold.soft_drop || state.edge.soft_drop) {
         rc = tetris_step(game);
     }
-    if (state.edge.space) {
+    if (state.edge.hard_drop) {
         // Fall all the way down
         while ((rc = tetris_step(game)) == 0);
     }

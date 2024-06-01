@@ -20,13 +20,13 @@ typedef unsigned int seed_t;
 
 
 typedef struct {
-    bool rotate_cw;
-    bool rotate_ccw;
-    bool hold;
-    bool down;
     bool left;
     bool right;
-    bool space;
+    bool rotate_cw;
+    bool rotate_ccw;
+    bool soft_drop;
+    bool hard_drop;
+    bool hold;
 } tetris_inputs_t;
 
 typedef struct {
