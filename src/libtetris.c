@@ -149,7 +149,9 @@ int rotate(tetris_t *game, const rotation_t amount) {
         ghost(game);
         return 0;
     } else {
-        const kick_table_t *const kick_table = game->current == PIECE_I ? &WALLKICK_I_CCW : &WALLKICK_NORMAL_CCW;
+        const kick_table_t *const kick_table = game->current == PIECE_I
+                                               ? amount == 1 ? &WALLKICK_I_CW : &WALLKICK_I_CCW
+                                               : amount == 1 ? &WALLKICK_NORMAL_CW : &WALLKICK_NORMAL_CCW;
 
         for (int i = 0; i < KICK_COUNT; ++i) {
             const coord_t dx = (*kick_table)[game->rotation][i][0];
@@ -385,9 +387,9 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     // Force fall on fall interval
     if (is_on_ground(game)) {
         game->lock_time -= params.delta_time;
-        if(game->lock_time <= 0){
+        if (game->lock_time <= 0) {
             rc = tetris_step(game);
-        }else{
+        } else {
             rc = 5;
         }
     } else {
