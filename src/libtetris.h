@@ -81,6 +81,11 @@ typedef struct {
     time_us_t fall_time;             // The accumulator that tracks the falling piece
     time_us_t delayed_auto_shift;    // DAS: The time it takes for the piece movement to start repeating after initial movement
     time_us_t automatic_repeat_rate; // AAR: The rate at which the piece repeats the movement
+
+    time_us_t lock_delay;            // The time it takes for a piece on the ground to lock
+    time_us_t lock_time;             // The accumulator that tracks the ground lock
+    uint8_t lock_resets;             // The amount of lock resets available
+
     tetris_hold_time_t input_time;   // Input timers that keep track of how long a key has been held
     tetris_inputs_t input_state;
     seed_t seed;

@@ -1,4 +1,5 @@
 #include "libtetris.h"
+#include <inttypes.h>
 #include <stdlib.h>
 #include <memory.h>
 #include <time.h>
@@ -12,6 +13,8 @@ int rotate_cw(tetris_t *game);
 
 int rotate_ccw(tetris_t *game);
 
+int shift(tetris_t *game, const coord_t dx);
+
 int left(tetris_t *game);
 
 int right(tetris_t *game);
@@ -22,11 +25,18 @@ void grab_next_piece(tetris_t *game);
 
 bool is_touching(tetris_t *game, const coord_t dx, const coord_t dy, const rotation_t rotation);
 
+bool is_on_ground(tetris_t *game);
+
+bool can_reset_lock_delay(tetris_t *game);
+
+void reset_lock_delay(tetris_t *game);
+
 bool increment_hold(tetris_hold_time_t *hold, tetris_inputs_t inputs, time_us_t delta_time);
 
 tetris_input_state_t get_keys(tetris_t *game, tetris_params_t params);
 
 void reset_piece_position(tetris_t *game);
+
 
 #ifdef RECORD_TRANSACTIONS
 void set_transaction_heap_size(transaction_list_t *list, uint64_t heap_size)
@@ -68,12 +78,11 @@ TETRIS_API transaction_list_t read_transactions(tetris_t *game)
 
 TETRIS_API void run_transactions(tetris_t *game, tetris_transaction_t *list, int length) {
     printf("transactions: %d\n", length);
-    for (int i = 0; i < length; i++){
-        printf("ticking: %d (%ld us)\n", i, list[i].params.delta_time);
+    for (int i = 0; i < length; i++) {
+        printf("ticking: %d (%"PRId64" us)\n", i, list[i].params.delta_time);
         tick(game, list[i].params);
     }
 }
-
 
 bool is_touching(tetris_t *game, const coord_t dx, const coord_t dy, const rotation_t rotation) {
     const coord_t x = game->x + dx;
@@ -94,28 +103,49 @@ bool is_touching(tetris_t *game, const coord_t dx, const coord_t dy, const rotat
     return false;
 }
 
-int left(tetris_t *game) {
-    if (!is_touching(game, -1, 0, game->rotation)) {
-        game->x--;
+bool is_on_ground(tetris_t *game) {
+    return game->y == game->ghosty;
+}
+
+bool can_reset_lock_delay(tetris_t *game) {
+    return game->lock_resets > 0;
+}
+
+void reset_lock_delay(tetris_t *game) {
+    --game->lock_resets;
+    game->lock_time = game->lock_delay;
+    printf("Reset lock delay: %d\n", game->lock_resets);
+}
+
+int shift(tetris_t *game, const coord_t dx) {
+    const bool on_ground_before_shift = is_on_ground(game);
+    if (!is_touching(game, dx, 0, game->rotation)) {
+        game->x += dx;
+        if (on_ground_before_shift && can_reset_lock_delay(game)) {
+            reset_lock_delay(game);
+        }
         ghost(game);
         return 0;
     }
     return 1;
 }
 
+int left(tetris_t *game) {
+    return shift(game, -1);
+}
+
 int right(tetris_t *game) {
-    if (!is_touching(game, 1, 0, game->rotation)) {
-        game->x++;
-        ghost(game);
-        return 0;
-    }
-    return 1;
+    return shift(game, 1);
 }
 
 int rotate(tetris_t *game, const rotation_t amount) {
     const rotation_t new_rotation = (game->rotation + amount) % 4;
+    const bool on_ground_before_rotation = is_on_ground(game);
     if (!is_touching(game, 0, 0, new_rotation)) {
         game->rotation = new_rotation;
+        if (on_ground_before_rotation && can_reset_lock_delay(game)) {
+            reset_lock_delay(game);
+        }
         ghost(game);
         return 0;
     } else {
@@ -128,6 +158,9 @@ int rotate(tetris_t *game, const rotation_t amount) {
                 game->rotation = new_rotation;
                 game->x += dx;
                 game->y += dy;
+                if (on_ground_before_rotation && can_reset_lock_delay(game)) {
+                    reset_lock_delay(game);
+                }
                 ghost(game);
                 return 0;
             }
@@ -168,6 +201,9 @@ void reset_piece_position(tetris_t *game) {
     game->y = -2;
     game->x = 3;
     game->rotation = 0;
+    game->lock_delay = 500000;
+    game->lock_time = game->lock_delay;
+    game->lock_resets = 15;
     ghost(game);
 }
 
@@ -194,8 +230,8 @@ void ghost(tetris_t *game) {
 
 int tetris_step(tetris_t *game) {
     ghost(game);
-    // Check if touching pieces
-    if (game->ghosty - game->y == 0) {
+    // Check if touching ground
+    if (is_on_ground(game)) {
         if (solidify(game)) {
             // Lost game
             return 1;
@@ -254,12 +290,8 @@ tetris_input_state_t get_keys(tetris_t *game, tetris_params_t params) {
     for (size_t i = 0; i < sizeof(tetris_inputs_t) / sizeof(bool); i++) {
         const int t = ((time_us_t *) &game->input_time)[i];
         const bool input = ((bool *) &game->input_state)[i];
-        ((bool *) &hold)[i] = (
-                t > game->delayed_auto_shift
-        );
-        ((bool *) &edge)[i] = (
-                t == 0 && input
-        );
+        ((bool *) &hold)[i] = t > game->delayed_auto_shift;
+        ((bool *) &edge)[i] = t == 0 && input;
         if (t > game->delayed_auto_shift) ((time_us_t *) &game->input_time)[i] -= game->automatic_repeat_rate;
     }
     return (tetris_input_state_t) {
@@ -325,9 +357,6 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     int pre_tick_lines = game->lines;
 
     // Input logic
-    if (state.hold.soft_drop || state.edge.soft_drop) {
-        rc = tetris_step(game);
-    }
     if (state.edge.hard_drop) {
         // Fall all the way down
         while ((rc = tetris_step(game)) == 0);
@@ -354,25 +383,36 @@ TETRIS_API int tick(tetris_t *game, tetris_params_t params) {
     }
 
     // Force fall on fall interval
-    game->fall_time -= params.delta_time;
-    while (game->fall_time <= 0) {
-        game->fall_time += game->fall_interval;
-        rc = tetris_step(game);
+    if (is_on_ground(game)) {
+        game->lock_time -= params.delta_time;
+        if(game->lock_time <= 0){
+            rc = tetris_step(game);
+        }else{
+            rc = 5;
+        }
+    } else {
+        const time_us_t drop_factor = params.inputs.soft_drop ? 6 : 1;
+        game->fall_time -= params.delta_time * drop_factor;
+        while (game->fall_time <= 0) {
+            game->fall_time += game->fall_interval;
+            rc = tetris_step(game);
+        }
     }
+
     if (game->lines > pre_tick_lines + 3) rc = 3;
 
 #ifdef RECORD_TRANSACTIONS
     game->last_change += params.delta_time;
 #endif
     if (rc == -1 && state.update) rc = 4;
-    if (rc != -1) {
+    if (rc != -1 || params.inputs.soft_drop) {
 #ifdef RECORD_TRANSACTIONS
         // Save transaction of the tick if something happened
         add_transaction(&game->transaction_list, (tetris_params_t){
             .inputs = params.inputs,
             .delta_time = game->last_change
         });
-        printf("recorded transaction: %ld\n", game->last_change);
+        printf("recorded transaction: %ld, %d\n", game->last_change, rc);
         game->last_change = 0;
 #endif
         // Set new fall interval
