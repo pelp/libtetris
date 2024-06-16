@@ -16,9 +16,9 @@ AlignConsecutiveDeclarations: true
 AccessModifierOffset: -4
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:        '^<.*\..*>'
-    Priority:     2
-  - Regex:        '^<.*>'
-    Priority:     1
-  - Regex:        '".*"'
-    Priority:     3
+  - Regex: '^<.*\..*>'
+    Priority: 2
+  - Regex: '^<.*>'
+    Priority: 1
+  - Regex: '".*"'
+    Priority: 3
