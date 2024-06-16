@@ -1,23 +1,22 @@
 #ifndef LIBTETRIS_LIBTETRIS_H
 #define LIBTETRIS_LIBTETRIS_H
 
-#include "bag.h"
-#include "framebuffer.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include "types.h"
 
 #ifdef _WIN32
 #define TETRIS_API __declspec(dllexport)
 #elif __GNUC__ >= 4
-#define TETRIS_API __attribute__ ((visibility ("default")))
+#define TETRIS_API __attribute__((visibility("default")))
 #else
 #define TETRIS_API
 #endif
 
-// This is probably the default size when looking at games played at medium pace
-#define TRANSACTION_LIST_INIT_SIZE 4096
-
-typedef int64_t time_us_t;
+typedef int64_t      time_us_t;
 typedef unsigned int seed_t;
-
 
 typedef struct {
     bool left;
@@ -30,70 +29,24 @@ typedef struct {
 } tetris_inputs_t;
 
 typedef struct {
-    tetris_inputs_t edge;
-    tetris_inputs_t hold;
-    bool update;
-} tetris_input_state_t;
-
-typedef struct {
-    time_us_t rotate_cw;
-    time_us_t rotate_ccw;
-    time_us_t hold;
-    time_us_t down;
-    time_us_t left;
-    time_us_t right;
-    time_us_t space;
-} tetris_hold_time_t;
-
-typedef struct {
     tetris_inputs_t inputs;
-    time_us_t delta_time;
+    time_us_t       delta_time;
 } tetris_params_t;
 
-typedef struct
-{
+typedef struct {
     tetris_params_t params;
 } tetris_transaction_t;
 
-typedef struct
-{
+typedef struct {
     tetris_transaction_t *transactions;
-    uint64_t heap_size;
-    uint64_t used_size;
+    uint64_t              heap_size;
+    uint64_t              used_size;
 } transaction_list_t;
 
-typedef struct {
-    framebuffer_t framebuffer;
-
-    coord_t x, y;      // Current x and y position
-    coord_t ghosty;    // Y-coordinate used to compare with y-coordinate above to check if piece hit bottom
-    rotation_t rotation; // Rotation of current piece
-    piece_id_t current; // Current piece on the board
-    piece_id_t hold;    // Held piece
-    bool can_hold;    // True if the user can hold the current piece
-    bag_t bag;        // Bag used for generating the sequence of pieces
-
-    // TODO: Add score system
-    int32_t lines; // Amount of lines cleared
-
-    // Timers
-    time_us_t fall_interval;         // The interval at which the piece falls down 1 tile
-    time_us_t fall_time;             // The accumulator that tracks the falling piece
-    time_us_t delayed_auto_shift;    // DAS: The time it takes for the piece movement to start repeating after initial movement
-    time_us_t automatic_repeat_rate; // AAR: The rate at which the piece repeats the movement
-
-    time_us_t lock_delay;            // The time it takes for a piece on the ground to lock
-    time_us_t lock_time;             // The accumulator that tracks the ground lock
-    uint8_t lock_resets;             // The amount of lock resets available
-
-    tetris_hold_time_t input_time;   // Input timers that keep track of how long a key has been held
-    tetris_inputs_t input_state;
-    seed_t seed;
-#ifdef RECORD_TRANSACTIONS
-    transaction_list_t transaction_list;
-    time_us_t last_change;
-#endif
-} tetris_t;
+// Public Types
+typedef struct tetris_input_state_t tetris_input_state_t;
+typedef struct tetris_hold_time_t   tetris_hold_time_t;
+typedef struct tetris_t             tetris_t;
 
 // Public API
 TETRIS_API tetris_t *create_game();
@@ -101,8 +54,8 @@ TETRIS_API tetris_t *create_game();
 TETRIS_API void destroy_game(tetris_t *game);
 
 TETRIS_API void init(tetris_t *game,
-                     int width,
-                     int height,
+                     int       width,
+                     int       height,
                      time_us_t fall_interval,
                      time_us_t delayed_auto_shift,
                      time_us_t automatic_repeat_rate);
@@ -116,5 +69,9 @@ TETRIS_API transaction_list_t read_transactions(tetris_t *game);
 TETRIS_API int get_lines(tetris_t *game);
 
 TETRIS_API void set_seed(tetris_t *game, seed_t seed);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

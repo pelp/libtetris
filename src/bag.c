@@ -2,6 +2,8 @@
 
 #include <stdlib.h>
 
+#include "lcg_rand.h"
+
 void init_bag(bag_t *bag) {
     generate_bag(bag);
     for (int i = 0; i < NUM_NEXT_PIECES; ++i) {
@@ -14,15 +16,11 @@ void generate_bag(bag_t *bag) {
     bag->current = 0;
     for (int i = 0; i < PIECE_COUNT; ++i) bag->order[i] = i;
     for (int i = PIECE_COUNT - 1; i > 0; --i) {
-        int j = lrand48() % (i + 1);
-        int temp = bag->order[i];
+        int j         = lcg_lrand48() % (i + 1);
+        int temp      = bag->order[i];
         bag->order[i] = bag->order[j];
         bag->order[j] = temp;
     }
-}
-
-piece_id_t peek_piece(bag_t *bag) {
-    return bag->order[bag->current];
 }
 
 piece_id_t grab_piece(bag_t *bag) {

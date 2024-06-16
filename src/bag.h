@@ -15,8 +15,6 @@ void init_bag(bag_t *bag);
 
 void generate_bag(bag_t *bag);
 
-piece_id_t peek_piece(bag_t *bag);
-
 piece_id_t grab_piece(bag_t *bag);
 
 #endif
