@@ -1,5 +1,9 @@
 #include "piece.h"
 
+framebuffer_t get_piece_framebuffer(piece_id_t id) {
+    return PIECE_FRAMEBUFFER[id];
+}
+
 uint8_t get_piece_width(piece_id_t id) {
     return PIECE_FRAMEBUFFER[id].width;
 }

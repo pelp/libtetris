@@ -480,6 +480,25 @@ TETRIS_API int8_t read_game(tetris_t *game, coord_t x, coord_t y) {
     return game->framebuffer.blocks[y * game->framebuffer.width + x];
 }
 
+TETRIS_API uint8_t get_hold_width(tetris_t *game){
+    return game->hold != PIECE_EMPTY ? get_piece_width(game->hold) : 0;
+}
+TETRIS_API uint8_t get_hold_height(tetris_t *game){
+    return game->hold != PIECE_EMPTY ? get_piece_height(game->hold) : 0;
+}
+TETRIS_API const int8_t* get_hold_blocks(tetris_t *game){
+    return game->hold != PIECE_EMPTY ? get_piece_blocks(game->hold) : NULL;
+}
+TETRIS_API uint8_t get_next_width(tetris_t *game, int index){
+    return (index >= 0 && index < NUM_NEXT_PIECES) ? get_piece_width(game->bag.next[index]) : 0;
+}
+TETRIS_API uint8_t get_next_height(tetris_t *game, int index){
+    return (index >= 0 && index < NUM_NEXT_PIECES) ? get_piece_height(game->bag.next[index]) : 0;
+}
+TETRIS_API const int8_t* get_next_blocks(tetris_t *game, int index){
+    return (index >= 0 && index < NUM_NEXT_PIECES) ? get_piece_blocks(game->bag.next[index]) : NULL;
+}
+
 TETRIS_API int get_lines(tetris_t *game) {
     return game->lines;
 }

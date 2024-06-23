@@ -76,6 +76,7 @@ static const framebuffer_t PIECE_FRAMEBUFFER[PIECE_COUNT] = {
         [PIECE_S] = {3, 2, PIECE_FRAMEBUFFER_DATA[PIECE_S]}
 };
 
+framebuffer_t get_piece_framebuffer(piece_id_t id);
 
 uint8_t get_piece_width(piece_id_t id);
 

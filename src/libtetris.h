@@ -70,6 +70,13 @@ TETRIS_API int get_lines(tetris_t *game);
 
 TETRIS_API void set_seed(tetris_t *game, seed_t seed);
 
+TETRIS_API uint8_t get_hold_width(tetris_t *game);
+TETRIS_API uint8_t get_hold_height(tetris_t *game);
+TETRIS_API const int8_t* get_hold_blocks(tetris_t *game);
+TETRIS_API uint8_t get_next_width(tetris_t *game, int index);
+TETRIS_API uint8_t get_next_height(tetris_t *game, int index);
+TETRIS_API const int8_t* get_next_blocks(tetris_t *game, int index);
+
 #ifdef __cplusplus
 }
 #endif
